@@ -9,7 +9,7 @@ To stay synchronized, we use a technical governance model that relies on consens
 - Classification: We maintain a lightweight ADR for any software-related decision that affects how different systems work together (interoperability). This ensures we stay aligned with external rules like the eIDAS Regulation and the EUDI Architecture Reference Framework (ARF).
 - Lifecycle: ADRs are managed on GitHub ([webuild-consortium/wp4-architecture](https://github.com/webuild-consortium/wp4-architecture/)). They move from a "Proposed" state to "Accepted" once the Architecture Group and relevant stakeholders reach a consensus.
 <!-- TODO Remove mermaid until I have fixed it in Pages - insert temp picture-->
-![ADR](https://github.com/webuild-consortium/wp4-architecture/blob/main/images/ADR_temp.png)
+![ADR](../images/ADR_temp.png)
 
 ## 7.2 WE BUILD Conformance Specifications (WBCS)
 If the ADR is the "Why," the [WE BUILD Conformance Specifications (WBCS)](https://github.com/webuild-consortium/wp4-architecture/tree/main/conformance-specs) are the "How".
@@ -17,7 +17,7 @@ If the ADR is the "Why," the [WE BUILD Conformance Specifications (WBCS)](https:
 - A Commitment to Implement: This is the most important part: An approved WBCS is **not just a suggestion**. When a specification is approved, it signifies a commitment from the participating organizations to actually build that interface into their services.
 - Dictating Implementation: Because the WBCS "dictate" how the code is written, they allow us to achieve interoperability across the whole consortium. If you follow the WBCS, you avoid building an "interoperable island" where your service only works with a few specific partners.
 - The Link to Testing: Our Interoperability Testbed (ITB) uses these specifications as its primary rulebook. If your implementation doesn't follow the WBCS, it won't pass the tests, and you won't be ready for the pilot phase.
-![CS Process and Roles](https://github.com/webuild-consortium/wp4-architecture/blob/main/images/WPRoles.png)
+![CS Process and Roles](../images/WPRoles.png)
 <!-- TODO: Change image to fit the document -->
 
 ## 7.3 Document Lifecycle
