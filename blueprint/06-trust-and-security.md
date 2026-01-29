@@ -1,16 +1,16 @@
-# 6. Trust, Security & Governance
+# Trust, Security & Governance
 
-## 6.1 Trust Ecosystem
+## Trust Ecosystem
 Relation to QTSP and Trust Registry.
 
-## 6.2 Security Measures
+## Security Measures
 Signatures, authentication, key lifecycle.
 
-## 6.3 Revocation and Trust Status Framework
+## Revocation and Trust Status Framework
 In order to fulfill the Article 5 baseline established in [Revocation Mandate](../02-regulatory-alignment.md#revocation-mandate), the consortium has identified the following operational scenarios.
 
 A robust and harmonized revocation mechanism for  Personal Identification Data (PID) and European Business Wallet Owner Identification Data (EBWOID) is a critical component of the European Digital Identity Wallet ecosystem. 
-### 6.3.1 Operational Revocation Scenarios
+### Operational Revocation Scenarios
 First we need to identify and categorize all potential situations that necessitate the invalidation of a PID or EBWOID. This analysis ensures that the resulting framework can address a wide range of real-world events, from user-initiated requests to administrative actions and security incidents. 
 <!-- TODO, categorize under Security and Unauthorized Access, Lifecycle and Inactivity Management, Compliance and Service Terms and End-of-Life Events? -->
 
@@ -44,20 +44,26 @@ First we need to identify and categorize all potential situations that necessita
   * _Example EBWOID: Termination or dissolution of the legal entity/busienss activity such as liquidation of a company._
 
 
-#### 6.3.2 Provider Obligations
+#### Provider Obligations
 To maintain a trusted ecosystem, PID and EBWOID providers agree to:
   * Publish clear policies: Tell the public exactly when and how you revoke data.
   * Own the Authority: Only the original issuer can revoke the data they issued.
   * Notify users fast: If data is revoked, the user must be told why within 24 hours via a secure channel.
   * Be Irreversible: Once identity data is revoked, it stays revoked to prevent fraud.
 
-#### 6.3.3 Conditions for Mandatory Revocation
+#### Conditions for Mandatory Revocation
 According to the rules, a provider must hit the revocation button without delay if:
  * The user explicitly asks for it.
  * The security of the wallet app itself (the unit certificate) is compromised.
  * Any of the specific situations defined in the provider's public policy occur.
 
-## 6.4 Governance Responsibilities
+## Relying Party Registration & Access Certificates 
+To be authored by Trust Group. Describes how verifiers registers and obtain the access certificates needed to securely identify themselves to a wallet
+
+## Validation Functions for Relying Parties 
+To be authored by QTSP Group? Details the services provided to help Relying Parties authenticate and validate the person identification data and attestations they receive
+
+## Governance Responsibilities
 Who owns what in the consortium.
 
 
