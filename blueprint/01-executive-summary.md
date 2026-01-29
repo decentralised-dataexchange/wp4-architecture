@@ -18,7 +18,7 @@ While the final EUDI ecosystem mandates a wallet for every citizen at Level of A
 ### Filling the "ARF Gaps" with WBCS
 The final ecosystem is strictly governed by the official [Architecture Reference Framework (ARF)](https://eudi.dev/latest/architecture-and-reference-framework-main/). However, because the ARF is still evolving, it does not yet cover every detail needed for complex business and payment scenarios. WE BUILD uses WE BUILD Conformance Specifications (WBCS) and Architectural Decision Records (ADRs) to create consortium-specific rules that "dictate the implementation" for our pilots. These specifications serve as our "rulebook" to ensure interoperability across all partners until the final EU standards are fully matured.
 
-### Proving Readiness through Testing, Not Just Certification
+### Proving Readiness through Testing
 In the final ecosystem, wallets and services must undergo formal certification by national bodies to ensure full legal compliance. Because we are in a pilot phase, WE BUILD relies on the Interoperability Testbed (ITB) as our primary gatekeeper. 
 
 ### From Lab to Near-Production
