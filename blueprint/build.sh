@@ -25,8 +25,16 @@ cat appendix-history.md >> main.md
 echo "Running kramdoc..."
 kramdoc --auto-ids main.md -o main.adoc
 
+# npm install -g @mermaid-js/mermaid-cli
+# npx @puppeteer/browsers install chrome@145.0.7632.46
+export CHROME_DEVEL_SANDBOX=$(realpath chrome/linux-145.0.7632.46/chrome-linux64/chrome_sandbox)
+# sudo chown root:root CHROME_DEVEL_SANDBOX
+# sudo chmod 4755 CHROME_DEVEL_SANDBOX
+
+ASCIIDOC_ARGS="-r asciidoctor-diagram -a allow-uri-read -a toc=left --doctype book"
+
 echo "Generating HTML..."
-asciidoctor --attribute toc=left --doctype book main.adoc
+asciidoctor ${ASCIIDOC_ARGS} main.adoc
 
 echo "Generating PDF..."
-asciidoctor-pdf --attribute toc=left --doctype book main.adoc --out-file main.pdf
+asciidoctor-pdf ${ASCIIDOC_ARGS} main.adoc --out-file main.pdf
