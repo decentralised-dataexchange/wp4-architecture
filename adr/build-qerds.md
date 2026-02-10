@@ -32,18 +32,19 @@ Key assumptions are:
 For EBW-to-QERDS communication, there does not yet seem to exist a common protocol and the WP4 Architecture group has discussed various ideas.
 
 For communication between QERDS providers, the reference standard [EN 319 522-4-1](https://www.etsi.org/deliver/etsi_en/319500_319599/3195220401/01.02.01_60/en_3195220401v010201p.pdf) specifies bindings based on AS4 (HTTP-based protocol in [ISO 15000-2:2021](https://www.iso.org/standard/79109.html), [OASIS Standard](https://docs.oasis-open.org/ebxml-msg/ebms/v3.0/profiles/AS4-profile/v1.0/os/AS4-profile-v1.0-os.html)) or email.
-The AS4 standard is referenced in EU legislation and implementations such as Peppol using the [eDelivery AS4] building block. Other protocols that follow the same architectural model exist (cf below).
+The AS4 standard is referenced in EU legislation and implementations such as Peppol using the [eDelivery AS4] building block. Other protocols that follow the same architectural model exist, and are outlined in the considered alternatives later in this section.
 
 [eDelivery AS4]: https://ec.europa.eu/digital-building-blocks/sites/spaces/DIGITAL/pages/467110114/eDelivery
 
-The AS4 protocol is based on XML signature and encryption and as such suffers from the same challenges that all XML-based protocols have wrt post-quantum safety. There is no current effort in any standards development organization to propose post-quantum algorithms for XML signatures or key agreement/encryption. This means that the effective lifetime of a solution based on AS4 is limited to a maximum of 6 or 7 years from the required go-live date for the EU business wallet.
-The 4-corner model of the AS4 architecture provides a way to introduce an abstraction layer towards the QERDS which means that in principle it is possible to replace the underlying QERDS protocol in the future although such a task would present signifficant challenges in practice.
+The AS4 protocol is based on XML signature and encryption and as such suffers from the same challenges that all XML-based protocols have with regard to post-quantum safety. There is no current effort in any standards development organisation to propose post-quantum algorithms for XML signatures or key agreement/encryption. This means that the effective lifetime of a solution based on AS4 is limited to a maximum of 6 or 7 years from the required go-live date for the European Business Wallet.
+
+The 4-corner model of the AS4 architecture provides a way to introduce an abstraction layer towards the QERDS, which means that in principle it is possible to replace the underlying QERDS protocol in the future, although such a task would present significant challenges in practice.
 
 The following alternatives were considered:
 
-- [OpenID4VC](https://openid.net/sg/openid4vc/) and [ISO/IEC 18013-7](https://www.iso.org/standard/91154.html) are standards for receiving credentials into and generating and presenting proofs from the EUDI wallet. These protocols are well suited for flows that involve user interaction but are more difficult to adapt to flows that involve automated systems or agents.
-- [DIDComm](https://identity.foundation/didcomm-messaging/spec/v2.1/) is conceptually quite similar to AS4 and has many benefits including a better path towards quantum safe signatures and encryption than an XML-based protocol has at this point. The downside of this alternative is that the standards need to be profiled for use in the EU, eg to reference existing trust infrastructure.
-- Alternatively, a new suite of protocols could be developed that fulfill the expected requirements of the EUBW such as suitability for automation and agents, compatibility with the EUDI natural person wallet etc. There are several options that could serve as a modern starting point for such work including the matrix protocol, activitypub, etc.
+- [OpenID4VC](https://openid.net/sg/openid4vc/) and [ISO/IEC 18013-7](https://www.iso.org/standard/91154.html) are standards for receiving credentials into and generating and presenting proofs from the EUDI Wallet. These protocols are well suited for flows that involve user interaction, but are more difficult to adapt to flows that involve automated systems or agents.
+- [DIDComm](https://identity.foundation/didcomm-messaging/spec/v2.1/) is conceptually quite similar to AS4 and has many benefits including a better path towards quantum safe signatures and encryption than an XML-based protocol has at this point. The downside of this alternative is that the standards need to be profiled for use in the EU, for example to reference existing trust infrastructure.
+- Alternatively, a new suite of protocols could be developed that fulfill the expected requirements of the EUBW such as suitability for automation and agents, compatibility with the EUDI natural person wallet etc. There are several options that could serve as a modern starting point for such work including the [Matrix](https://matrix.org/) protocol and [ActivityPub](https://activitypub.rocks/).
 
 ## Decision
 
@@ -60,15 +61,16 @@ If use cases require gateways to the designated QERDS, in principle the use case
 
 Testing and piloting with a designated QERDS makes it easier:
 
-- To implement use-cases for the EUBW that requires automation and/or agent-based access.
+- To implement use cases for the EUBW that requires automation and/or agent-based access.
 - To connect with organisations responsible for authentic sources for the retrieval and/or verification of attributes, which is necessary for the issuance of qualified electronic attestations of attributes (see [Feature: Verification of attributes](https://github.com/webuild-consortium/wp4-qtsp-group/blob/main/docs/qeaa/verification.feature.md)).
 - To develop the QERDS aspect of the envisioned EBW ecosystem, using the WE BUILD ecosystem and its Interoperability Test Bed to provide a meaningful and collaborative context.
 
-Open issues
+Open issues:
 
-- Adapting e2e encryption in the 4 corner model to the EUBW
-- Support hardware bound credentials and differentiated level of assurance
-  The WP4 Architecture group can provide the necessary design competence.
+- Adapting end-to-end encryption in the four-corner model to the European Business Wallet.
+- Support hardware bound credentials and differentiated level of assurance.
+
+The WP4 Architecture group can provide the necessary design competence.
 
 The following risks need to be addressed:
 
