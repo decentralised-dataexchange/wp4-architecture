@@ -32,6 +32,7 @@ If the ADR is the "Why," the [WE BUILD Conformance Specifications (WBCS)](https:
 - A Commitment to Implement: This is the most important part: An approved WBCS is **not just a suggestion**. When a specification is approved, it signifies a commitment from the participating organizations to actually build that interface into their services.
 - Dictating Implementation: Because the WBCS "dictate" how the code is written, they allow us to achieve interoperability across the whole consortium. If you follow the WBCS, you avoid building an "interoperable island" where your service only works with a few specific partners.
 - The Link to Testing: Our Interoperability Testbed (ITB) uses these specifications as its primary rulebook. If your implementation doesn't follow the WBCS, it won't pass the tests, and you won't be ready for the pilot phase.
+
 ```mermaid
 ---
 config:
