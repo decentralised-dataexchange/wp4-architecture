@@ -30,14 +30,41 @@ The blueprint aims to describe how WE BUILD structures and cross-references Rule
 
 In the [Appendix - Trust Ecosystem](../appendix-trust-ecosystem.md) there is a diagrom that summarises the roles of Member State and European Commission, the split between registration and notification, and how Trusted Lists and the LoTL are produced and consumed. The simplified version for WE BUILD:
 
-[insert mermaid TL magic]
+````mermaid
+graph TB
+    subgraph MS["weBuild Registry"]
+        Registrar[Registration Service]
+        TLProvider[Trusted List Provider]
+        APTL[Attestation Provider TLs]
+    end
+
+    subgraph Entities["weBuild Participant"]
+        AP[Attestation Provider]
+        WP[Wallet Provider]
+        RP[Relying Party]
+    end
+
+    subgraph TL["weBuild Trusted List Provider"]
+        LoTLPublication[List of Trusted Lists]
+    end
+
+    AP -->|Register| Registrar
+    WP -->|Register| Registrar
+    RP -->|Register| Registrar
+
+    LoTLPublication -->|references|TLProvider
+    LoTLPublication -->|references|APTL
+
+    style MS fill:#e1f5ff
+    style TL fill:#fff4e1
+    style Entities fill:#e8f5e9
 
 WE BUILD participants willing to register are going to be able to select a registry in which they are going to be registered. 
 
 ## Revocation and Trust Status Framework
 In order to fulfill the Article 5 baseline established in [Revocation Mandate](../02-regulatory-alignment.md#revocation-mandate), the consortium has identified the following operational scenarios.
 
-The revocation mechanism for Personal Identification Data (PID), Legal Person Identification Data (LPID), European Business Wallet Owner Identification Data (EBWOID), and for person wallet instances (Wallet Units) **is a critical component** of the European Digital Identity Wallet ecosystem. 
+The revocation mechanism for PID, EBWOID, and for person wallet instances (Wallet Units) **is a critical component** of the European Digital Identity Wallet ecosystem. 
 
 ### Operational Revocation Scenarios
 
