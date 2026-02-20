@@ -33,7 +33,7 @@ To be authored by Group 6 (QTSP). Explains the technical flows for wallet-centri
 ## Secure communication channel
 In WE BUILD, the secure communication channel will be implemented through Qualified Electronic Registered Delivery Services (QERDS) operated by QTSPs. The core idea will be that whenever a message will need legal-grade delivery assurance (who sent what, to whom, and when it was received), it will be routed through QERDS so that delivery will be registered and can later be proven to a relying party. This “registered delivery” pattern will be positioned as an enabler for interactions between competent authorities, economic operators, and relying parties.
 
-#### From “registered delivery” to “digital identity wallets”
+### From “registered delivery” to “digital identity wallets”
 As a baseline a classic B2G/B2B situation will be used: an authority will notify an economic operator, the economic operator will respond, and the relying party will require evidence. With QERDS, both sides will use their QERDS providers to register sending and receiving, so that delivery will not be just transport, but will be a process that will produce trustworthy evidence.
 
 WE BUILD will take the next step: wallets will become the user-facing endpoints (“wallet-centric delivery”). The sender wallet and recipient wallet will remain the places where users will read, will approve, and will manage messages, but QERDS providers will form the delivery layer underneath, handling routing, inter-provider exchange, and evidence creation, while wallets will provide identity/authentication and user control.
