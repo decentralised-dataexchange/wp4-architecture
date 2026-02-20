@@ -3,14 +3,7 @@ The WE BUILD project is anchored in a  legal framework designed to reduce admini
 
 Technical development follows mandatory rules such as the Article 5 revocation requirements and the "Business-Wallet-by-Default" principle, ensuring our infrastructure supports future initiatives. 
 
-## Normative References
-
-<!-- EUDI Wallet Mandate: Regulation (EU) 2024/1183, which mandates the issuance of wallets to natural persons at Level of Assurance (LoA) High. CIR still on its way, will be reopened.
-EBW Proposal: COM(2025) 838 proposal. Explain that the EBW is intended for economic operators and public sector bodies to exchange data with full legal effect. CIR to come.
-ARF
-Standardisation work -->
-
-**EUDIW Framework**
+## EUDIW Framework
 
 The WE BUILD consortium will anchor its work in the eIDAS legal framework - [Regulation (EU) No 910/2014](https://eur-lex.europa.eu/eli/reg/2014/910/oj/eng), as amended by [Regulation (EU) 2024/1183](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1183) (jointly referred to as “the Regulation”), which establishes the European Digital Identity Framework and defines the legal basis for the EU Digital Identity Wallet (EUDIW) ecosystem. This means WE BUILD’s use case designs, governance and assurance approach will be aligned to the Regulation’s requirements for a Wallet that is mutually recognised across the EU and usable in both public and private sector service contexts.
 
@@ -22,7 +15,7 @@ The Regulation is operationalized through several packages of Commission impleme
 In the second batch (of 6 May 2025), four implementing regulations were adopted, namely: 2025/848 (registration of wallet-relying parties), 2025/849 (submission of information to the Commission and to the Cooperation Group for the list of certified European Digital Identity Wallets), 2025/847 (reactions to Wallet security breaches), and 2025/846 (cross-border identity matching for natural persons). 
 In the third batch (of 29 July 2025), the Commission adopted seven further implementing regulations: 2025/1566 (verification of identity and attributes, for QTSs), 2025/1567 (rQSCD management), 2025/1568 (eID schemes peer reviews), 2025/1569 (electronic attestations of attributes), 2025/1570_(notification of certified or cancelled QSCDs), 2025/1571 (formats of supervisory bodies annual reports) and 2025/1572 (QTSP initiation, Notification and verification).
 
-**EUBW Framework**
+## EUBW Framework
 
 The European Business Wallet framework is introduced through the European Commission’s [Digital Package proposal](https://digital-strategy.ec.europa.eu/en/news/simpler-eu-digital-rules-and-new-digital-wallets-save-billions-businesses-and-boost-innovation) published as part of its 2025 Work Programme. The [proposed Regulation on the establishment of European Business Wallets](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:52025PC0838) aims to establish the EU Business Wallet as a harmonised digital solution to ease the administrative burden and to enable companies and public sector bodies to identify, to authenticate and to exchange data in a secure and user-friendly way, with full legal effect across the European Union.
 
@@ -40,7 +33,7 @@ Implementing regulations will further detail the requirements and functionalitie
 The WE BUILD consortium will treat the proposed European Business Wallet (EUBW) regime as a primary regulatory and architectural reference point for business-focused digital identity and data-exchange scenarios: in designing and piloting its use cases, WE BUILD will rely on the EUBW model’s harmonised legal effect, interoperability with the EUDI Wallet ecosystem, and the prescribed trust services and attestation flows (EAAs, representation/mandates, secure delivery, directory-based trust), and will strongly consider the forthcoming implementing acts as the baseline for ensuring that its pilots remain future-proof, compliant-by-design, and readily scalable across Member States.
 
 
-### Standardization and Technical Specifications
+## Standardization and Technical Specifications
 The WE BUILD consortium will rely upon several technical specifications and standards.
 
 The European Commission in collaboration with the European Digital Identity Cooperation Group has published the EUDI Wallet Architecture and Reference Framework (ARF) and the related Technical Specifications.
@@ -66,5 +59,3 @@ In addition to the aforementioned standardization organizations, the [European C
 - **Security-by-design:** Security is integrated into the architecture from the start, aiming at following the strict mandates for Level of Assurance (LoA) High for citizens and Substantial for business transactions. 
 - **Privacy-by-design:** While business interactions require transparency and traceability, we need to ensure that users maintain sole control over their data. 
 
-## Compliance Expectations
-How the Blueprint ensures alignment without duplicating specifications.
