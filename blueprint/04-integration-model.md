@@ -38,7 +38,7 @@ As a baseline a classic B2G/B2B situation will be used: an authority will notify
 
 WE BUILD will take the next step: wallets will become the user-facing endpoints (“wallet-centric delivery”). The sender wallet and recipient wallet will remain the places where users will read, will approve, and will manage messages, but QERDS providers will form the delivery layer underneath, handling routing, inter-provider exchange, and evidence creation, while wallets will provide identity/authentication and user control.
 
-#### Technical flow (WE BUILD high-level)
+### Technical flow (WE BUILD high-level)
 WE BUILD will follow the QERDS architecture decomposition and the 4-corner delivery pattern:
 1) Sender identification and authentication will be performed at the sender’s QTSP (wallet-driven).
 2) Message submission will be performed from the sender wallet to the sender QERDS (QTSP A).
