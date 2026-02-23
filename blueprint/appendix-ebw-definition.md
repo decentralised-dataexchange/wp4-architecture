@@ -24,7 +24,7 @@ The wallet owner is defined by **owner identification data**, which includes an 
 A Business Wallet can have multiple **wallet users**, meaning natural or legal persons that operate the wallet through a user interface or an application programming interface under roles and mandates set by the wallet owner. These wallet users may apply software applications to access these interfaces. Some users may be **authorised representatives**, while others may be employees or service providers operating within delegated permissions.
 
 ### Conceptual model
-![CS Process and Roles](images/EBW-def-1.png)
+![Conceptual model](images/EBW-def-1.png)
 
 ## Business Wallet definition
 
