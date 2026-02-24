@@ -1,4 +1,5 @@
-# Appendix B - Business Wallet Definition
+# Appendix D - Business Wallet Definition
+
 Revision 1.0
 
 ## Scope and context 

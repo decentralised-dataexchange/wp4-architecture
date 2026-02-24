@@ -59,16 +59,16 @@ markdown-enum main-body.md 1 main-body-enum.md
 cat main-body-enum.md >> main.md
 
 echo >> main.md
-cat appendix-trust-ecosystem.md >> main.md
-
-echo >> main.md
-cat appendix-ebw-definition.md >> main.md
-
-echo >> main.md
 cat appendix-glossary.md >> main.md
 
 echo >> main.md
 cat appendix-history.md >> main.md
+
+echo >> main.md
+cat appendix-trust-ecosystem.md >> main.md
+
+echo >> main.md
+cat appendix-ebw-definition.md >> main.md
 
 echo "Running kramdoc..."
 kramdoc --auto-ids main.md -o main.adoc
