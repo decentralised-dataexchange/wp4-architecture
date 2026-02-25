@@ -90,7 +90,7 @@ It is necessary to identify and categorize all potential situations that necessi
    * _Example: A Wallet Provider fails to meet mandatory security compliance standards, resulting in the withdrawal of its authorization to operate in the eIDAS Trust Framework and is thus not allowed to provide wallet solutions anymore._
      
 * **Abusive or Fraudulent Use:** Detection of abusive, fraudulent, or unauthorised activities associated with the identity data.
-   * _Example: An economic operator observes that the business wallet is used for unauthorised transactions by representatives of the company._
+   * _Example 1: An economic operator observes that the business wallet is used for unauthorised transactions by representatives of the company._
    * _Example 2: A law enforcement agency asks the PID provider by court order for revocation of a criminal user's PID._
      
 * **Prolonged Inactivity:** Revoking/Cancelling of reissuance due to extended periods of non-use, as defined by the provider's policy.
