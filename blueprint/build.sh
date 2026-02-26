@@ -73,17 +73,21 @@ cat appendix-ebw-definition.md >> main.md
 echo "Running kramdoc..."
 kramdoc --auto-ids main.md -o main.adoc
 
-ASCIIDOC_ARGS="-r asciidoctor-diagram -a allow-uri-read -a toc=left --doctype book"
+ASCIIDOC_ARGS="-r asciidoctor-diagram -a allow-uri-read -a toc=left --doctype book --verbose"
+
+# Set SVG output mode for Mermaid diagrams
+sed -e 's/\[mermaid\]/[mermaid, format=svg]/g' main.adoc > main-svg.adoc
 
 echo "Generating HTML..."
-asciidoctor ${ASCIIDOC_ARGS} main.adoc -o blueprint.html
+asciidoctor ${ASCIIDOC_ARGS} main-svg.adoc -o blueprint.html
 
-echo "Generating PDF..."
-asciidoctor-pdf ${ASCIIDOC_ARGS} main.adoc --out-file blueprint.pdf
+# echo "Generating PDF..."
+# asciidoctor-pdf ${ASCIIDOC_ARGS} main.adoc --out-file blueprint.pdf
 
 mkdir -p ../build_outputs_folder/blueprint
 cp blueprint.html ../build_outputs_folder/blueprint/blueprint.html
-cp *png ../build_outputs_folder/blueprint/
-rm -rf ../build_outputs_folder/images
-cp -R ../images ../build_outputs_folder/
-cp blueprint.pdf ../build_outputs_folder/blueprint/blueprint.pdf
+for IMAGE in *.png *.svg; do
+    cp ${IMAGE} ../build_outputs_folder/blueprint/
+done
+
+# cp blueprint.pdf ../build_outputs_folder/blueprint/blueprint.pdf
