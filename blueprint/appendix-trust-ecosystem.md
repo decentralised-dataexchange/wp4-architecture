@@ -121,7 +121,7 @@ graph TB
     style EntitiesScope fill:#e8f5e9
     style TL fill:#f3e5f5
 ```
-> Note: WP4 is going to expose trust infrastructure depicted on this diagram, mimicking the infrastructure of at least one Member State. In the case of mimicking more than a single Member State, WE BUILD participants willing to register are going to be able to select a registry in which they are going to be registered, or the WP4 registrar, if single, is going to place them in one of the registries. For the sake of simplicity, in such a case, not all the technical components depicted on a diagram within a Member State will have to be multiplied; e.g. there may be multiple registries but a single trusted list across the countries to which all wallet-reliant parties are provisioned.
+> Note: WP4 is going to expose trust infrastructure depicted on this diagram, mimicking the infrastructure of at least one Member State. In the case of mimicking more than a single Member State, WE BUILD participants willing to register are going to be able to select a registry in which they are going to be registered, or the WP4 registrar, if single, is going to place them in one of the registries. For the sake of simplicity, in such a case, not all the technical components depicted in the diagram within a Member State will have to be multiplied; e.g. there may be multiple registries but a single trusted list across the countries to which all wallet-relying parties are provisioned.
 
 ## Security Measures
 
