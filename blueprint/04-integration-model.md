@@ -51,5 +51,4 @@ WE BUILD will follow the QERDS architecture decomposition and the 4-corner deliv
 7) Evidence will be made accessible to sender and recipient wallets (submission/dispatch and receipt/consignment or non-delivery). Evidence will be protected by qualified sealing and, where required, qualified timestamping. Where applicable, the evidence can be pushed to the sender’s and the recipient’s backend systems as well.
 
 #### Scaling to the EU Business Wallet: “reliable access points”
-For the EU Business Wallet, the planned approach will position QERDS as a designated network of reliable access points: businesses and businesses with governments will interact across the EU by connecting their wallets to a chosen access point/QERDS provider, while interoperability will ensure end-to-end reachability without vendor lock-in. WE BUILD’s future implementation will pilot this “delivery layer” so that EBW-to-EBW and EBW-to-government messaging will reuse the same secure channel principles: mutual authentication, end-to-end integrity and confidentiality, interoperability across access points, and, when needed, timestamped evidence.
 
