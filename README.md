@@ -1,5 +1,5 @@
 <h1 align="center">
-   WE BUILD WP4 Architecture Group 
+   WE BUILD WP4 Architecture 
 </h1>
 
 <p align="center">
