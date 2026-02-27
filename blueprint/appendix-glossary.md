@@ -1,8 +1,8 @@
-# Appendix B – Glossary
+# Appendix A – Glossary
 
 ## Terms and Definitions
 
-This appendix defines the key terms, regulatory frameworks, and technical specifications utilized throughout the WE BUILD ecosystem.
+This appendix defines the key terms, regulatory frameworks, and technical specifications utilised throughout the WE BUILD ecosystem.
 
 While this document avoids abbreviations as much as possible, commonly used abbreviations are included for reference.
 
