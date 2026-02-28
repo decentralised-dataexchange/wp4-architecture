@@ -47,7 +47,7 @@ In the WE BUILD project the focus is primarily on wallets for legal entities. In
 %% WE BUILD trust topology with QTSP/QERDS and European Digital Directory
 flowchart TB
     issuer["Issuer&nbsp;&nbsp;"]
-    holder["Holder&nbsp;&nbsp;<br/>(Business Wallet)"]
+    holder["Holder&nbsp;&nbsp;"]
     verifier["Verifier&nbsp;&nbsp;<br/>(Relying Party)"]
     qtsp["QTSP / QERDS&nbsp;&nbsp;"]
     directory["European Digital<br/>Directory (Art. 10)"]
