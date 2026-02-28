@@ -1,11 +1,13 @@
 # Architecture Overview
 
 ## The Ecosystem at a Glance
-The EU digital identity and EU business wallet ecosystem is an instance of the 3-party model for attestations. The core actors are:
+The EU digital identity and EU business wallet ecosystem is an instance of the 3 party model for attestations. In this model there are 4 main actors:
 
-1. **Holder** — the identity wallet controlled by either a natural or legal person. For natural persons this is the European Digital Identity Wallet (EUDIW) defined in Regulation (EU) No 910/2014 as amended; for economic operators and public sector bodies this is the European Business Wallet (EBW) established by Regulation (EU) 2025/2747.
-2. **Issuer** — an entity that relies on authentic sources of information to issue electronic attestations of attributes to the holder's wallet. Issuer types include PID Providers, EBWOID Providers, QEAA Providers, PuB-EAA Providers, and non-qualified EAA Providers.
-3. **Verifier** — a relying party (natural person, economic operator, or public sector body) that requests and receives attestations based on information present in the wallet.
+1. The holder, aka the identity wallet that is controlled by either a natural or legal person
+2. The issuer that relies on authentic sources of information to issue attestations to the holder/wallet
+3. The verifier receives an attestation based on information present in the wallet.
+4. The trust framework that in the EU ecosystems is based on ETSI TS 119604/119612 aka trust status lists populated by trust status providers that for some use cases are QTSPs
+
 
 The EU ecosystem for the natural person wallet is described in more detail in [ARF]. The corresponding document for the EU legal person wallet is in progress.
 
