@@ -1,7 +1,7 @@
 # WE BUILD - Conformance Specification:  Credential Presentation
 
-Version 1.1 / Approved
-Date: 30 April 2026
+Version 1.2 / Draft
+Date: 20 May 2026
 
 **Authors / Contributors**: WP4 Architecture
 
@@ -49,7 +49,7 @@ Table Of Contents
 
 # 1. Introduction
 
-This document defines the **WE BUILD Conformance Specification for Credential Presentation**, describing how Wallet Units (WU) and Verifiers interoperate using OpenID for Verifiable Presentations (OpenID4VP) 1.0 [1] in alignment with the OpenID4VC High Assurance Interoperability Profile (HAIP) 1.0 - Implementer’s Draft 1 [2], based on the decision recorded in WE BUILD [ADR Base Protocols](https://github.com/webuild-consortium/architecture/blob/main/adr/base-protocols.md).
+This document defines the **WE BUILD Conformance Specification for Credential Presentation**, describing how Wallet Units (WU) and Verifiers interoperate using OpenID for Verifiable Presentations (OpenID4VP) 1.0 [1] in alignment with the OpenID4VC High Assurance Interoperability Profile (HAIP) v1.0 [2], based on the decision recorded in WE BUILD [ADR Base Protocols](https://github.com/webuild-consortium/architecture/blob/main/adr/base-protocols.md).
 
 It specifies a high‑assurance presentation profile for use within the WE BUILD ecosystem, covering:
 
@@ -73,9 +73,9 @@ This specification defines the conformance profile for high‑assurance credenti
     * OpenID4VP 1.0
     * HAIP ID‑1 Section 5 requirements
     * JWT‑based Presentation Proof
-    * SD‑JWT‑VC selective disclosure
+    * SD‑JWT‑VC selective disclosure (Credential Format identifier `dc+sd-jwt`)
     * Same‑device and cross‑device invocation
-    * openid4vp:// Wallet invocation
+    * `haip-vp://` Wallet invocation (per HAIP §5.1) and W3C Digital Credentials API invocation (per HAIP §5.2)
 
 # 3. Normative Language
 
@@ -96,25 +96,31 @@ This specification uses the following roles:
 
 # 5. Protocol Overview
 
-The WE BUILD presentation profile is based on OpenID4VP with the following mandatory features defined by HAIP ID-1:
+The WE BUILD presentation profile is based on OpenID4VP with the following mandatory features defined by HAIP v1.0:
 
-* JWT-Secured Authorisation Request (JAR): All authorisation requests MUST be signed.
-* Digital Credentials Query Language (DCQL): MUST be used for querying credentials.
-* Client Identifier Schemes: Usage of `x509_san_dns` or `verifier_attestation`, `decentralized_identifiers` is also recommended (`did:web`, `did:jwk`)
-* Crypto Suites: Strict adherence to P-256 (secp256r1) with ES256 for signing.
+* Response Type: MUST be `vp_token`.
+* JWT-Secured Authorisation Request (JAR) [RFC 9101]: All authorisation requests MUST be signed and conveyed via `request_uri`.
+* Digital Credentials Query Language (DCQL): MUST be used for querying credentials. AKI-based Trusted Authority Query (`trusted_authorities` with `aki`) MUST be supported (HAIP v1.0 §5).
+* Client Identifier Prefix: `x509_hash` MUST be used (HAIP v1.0 §5). The X.509 certificate of the trust anchor MUST NOT be included in the `x5c` JOSE header of the signed request. Other Client Identifier prefixes are out of scope for WE BUILD.
+* Crypto Suites: ECDSA with P-256 (secp256r1) and SHA-256 (`ES256`) MUST be supported for signing.
+* Response Encryption: For `response_mode` values `direct_post.jwt` and `dc_api.jwt`, the response MUST be encrypted using JWE with `alg=ECDH-ES` (P-256 key agreement). Verifiers MUST list both `A128GCM` and `A256GCM` in `encrypted_response_enc_values_supported`. Wallets MUST support `A128GCM` or `A256GCM` or both; if both are supported, Wallets SHOULD use `A256GCM`.
+* Ephemeral Encryption Keys: Verifiers MUST supply ephemeral encryption public keys specific to each Authorization Request, passed via `client_metadata`.
 * Holder Binding: Mandatory Key Binding JWT (KB-JWT) for SD-JWT VCs. (See **NOTE_CS02_01**)
+* Credential Format identifiers: SD-JWT VC MUST use `dc+sd-jwt`. mdoc (when used) MUST use `mso_mdoc`.
 
 High‑level steps:
 
-1. Verifier creates Presentation Request
-2. Wallet is invoked via openid4vp:// (same or cross device)
+1. Verifier creates Presentation Request (JAR-signed, `vp_token` response type)
+2. Wallet is invoked via `haip-vp://` (same or cross device) or the W3C DC API
 3. Wallet validates Presentation Request
 4. Holder consents
 5. Wallet generates Presentation Proof + Disclosures
-6. Wallet submits Presentation Response
-7. Verifier validates and produces outcome
+6. Wallet submits Presentation Response (encrypted via `direct_post.jwt` or `dc_api.jwt`)
+7. Verifier validates and returns redirect/result
 
-***NOTE_CS02_01: ISO18013-5 and  ISO18013-7 will be supported in subsequent versions based on use case requirements.***
+***NOTE_CS02_01: ISO18013-5 and ISO18013-7 will be supported in subsequent versions based on use case requirements.***
+
+***NOTE_CS02_DCAPI: HAIP §5.2 defines a separate invocation profile via the W3C Digital Credentials API. This CS covers both invocation modes side-by-side as required by HAIP v1.0; a follow-up CS may further profile DC API-specific RP/JS and OS-level details.***
 
 
 # 6. High-level Flows
@@ -125,25 +131,27 @@ This chapter defines the presentation flows required by WE BUILD.
 
 ### 6.1.1 Presentation Request Creation
 
-The Verifier prepares a signed Presentation Request Object containing:
+The Verifier prepares a JAR-signed Presentation Request Object containing:
 
-* Requested credential types
-* Disclosure constraints
-* Proof requirements (nonce, audience)
-* Expiry (exp)
-* Verifier identifier (client_id)
+* `response_type=vp_token`
+* Verifier identifier (`client_id`) using the `x509_hash` prefix
+* `response_mode=direct_post.jwt` (redirect flow) or `dc_api.jwt` (DC API flow)
+* `client_metadata` carrying the per-request ephemeral encryption JWK and supported `alg`/`enc` (ECDH-ES, A128GCM/A256GCM)
+* DCQL query specifying requested credential types and disclosure constraints, including `trusted_authorities` with `aki`
+* Proof requirements (`nonce`)
+* Expiry (`exp`)
 
-The request MUST be integrity‑protected (JAR‑style or equivalent).
+The request MUST be integrity‑protected via JAR (RFC 9101). The trust anchor MUST NOT be included in the `x5c` JOSE header.
 
 ### 6.1.2 WU Invocation
 
-The Verifier redirects the user-agent to the WU using:
+The Verifier invokes the Wallet via the `haip-vp://` custom URL scheme (or, alternatively, the W3C Digital Credentials API for in-browser flows):
 
 ```
-openid4vp://present?request_uri=<URL>
+haip-vp://?client_id=x509_hash:<thumbprint>&request_uri=https://verifier.example.org/request/<id>
 ```
 
-Wallet retrieves or validates the signed Presentation Request Object.
+The Wallet fetches the signed Presentation Request Object from `request_uri`.
 
 ### 6.1.3 WU Validation
 
@@ -184,12 +192,12 @@ Upon consent, the Wallet MUST generate:
 
 ### 6.1.6 Presentation Submission
 
-The Wallet MUST POST the Presentation Response to the Verifier’s Presentation Response Endpoint, including:
+The Wallet MUST POST the Presentation Response to the Verifier's `response_uri`, encrypted as a JWE (`alg=ECDH-ES`, `enc=A128GCM` or `A256GCM`) under `response_mode=direct_post.jwt`, including:
 
-* `vp_token` containing the JWT‑encoded Presentation
-* format specifying SD‑JWT‑VC
+* `vp_token` containing the Verifiable Presentation
+* For SD‑JWT VC, the Credential Format identifier `dc+sd-jwt` (mdoc uses `mso_mdoc`)
 
-Sender‑constrained token usage MUST be applied if configured.
+The Verifier MUST respond with an HTTP body containing `redirect_uri`; the Wallet MUST follow that redirect (HAIP §5.1).
 
 
 ### 6.1.7 Result Handling
@@ -207,7 +215,7 @@ Wallet MUST correctly display the outcome to the Holder.
 
 ### 6.2.1 Presentation Request Creation and Display
 
-Verifier constructs the Presentation Request Object (as in 6.1.1) and encodes it in a QR‑based `openid4vp://` URL.
+Verifier constructs the Presentation Request Object (as in 6.1.1) and encodes a `haip-vp://` URL in a QR code. The URL carries `client_id` (with `x509_hash` prefix) and `request_uri`.
 
 
 ### 6.2.2 Wallet Unit Invocation via QR
@@ -244,19 +252,26 @@ The requirements in 7.1 and 7.2 attach to the OpenID4VP **roles** of Wallet Unit
 
 Wallets MUST:
 
-1. Support HAIP‑compliant OpenID4VP.
-2. Support the same‑device and cross‑device flows.
-3. Support openid4vp://present invocation.
-4. Validate signed Presentation Requests.
-5. Implement SD‑JWT‑VC selective disclosure.
-6. Provide transparent Holder consent.
-7. Generate JWT‑based Presentation Proof.
-8. Bind Presentation Proof to Verifier’s nonce and audience.
-9. Submit Presentation Responses to the Presentation Response Endpoint.
+1. Support HAIP v1.0‑compliant OpenID4VP with response type `vp_token`.
+2. Support the same‑device and cross‑device redirect flows (HAIP §5.1) and Wallet Invocation via the W3C Digital Credentials API or an equivalent platform API (HAIP §5.2).
+3. Register for and accept Wallet invocation via the `haip-vp://` custom URL scheme (IANA-registered, HAIP Appendix A.1.2). Implementations MAY additionally support claimed `https` scheme URIs.
+4. Reject any Wallet invocation URI that does not carry a valid `client_id` with the `x509_hash` prefix and a `request_uri` resolvable to the Verifier identified by that certificate.
+5. Validate signed Presentation Requests (JAR, RFC 9101) using X.509 certificate-based key resolution; reject requests whose `x5c` JOSE header includes the trust anchor.
+6. Use the `x509_hash` Client Identifier Prefix only. Other Client Identifier prefixes are out of scope for WE BUILD.
+7. Use DCQL and support AKI-based `trusted_authorities` queries (HAIP §5).
+8. Implement SD‑JWT‑VC selective disclosure with Credential Format identifier `dc+sd-jwt`; KB-JWT MUST always be present when the credential has cryptographic Holder binding.
+9. Support JWE response encryption with `alg=ECDH-ES` (P-256 key agreement) and `enc=A128GCM` or `A256GCM` (or both). When both are supported, the Wallet SHOULD use `A256GCM`. This applies to `response_mode=direct_post.jwt` (redirect flow, HAIP §5.1) and `response_mode=dc_api.jwt` (DC API flow, HAIP §5.2).
+10. Support unsigned, signed, and multi-signed Authorization Requests as defined in Appendices A.3.1 and A.3.2 of OpenID4VP, when the DC API is used (HAIP §5.2).
+11. Provide transparent Holder consent.
+12. Generate JWT‑based Presentation Proof and bind it to the Verifier's `nonce` and `audience`.
+13. Submit Presentation Responses to the Verifier's `response_uri` (redirect flow) or via the DC API platform call, encrypted per item 9.
+14. In the same-device redirect flow, follow the `redirect_uri` returned by the Verifier in the HTTP response to the Wallet's POST to `response_uri` (HAIP §5.1).
 
 Wallets MUST NOT:
 
 * Accept unsigned or invalid Presentation Requests
+* Accept Client Identifier prefixes other than `x509_hash`
+* Accept invocation URIs missing a resolvable `client_id` or `request_uri`
 * Auto‑consent
 * Add unsolicited claims
 
@@ -266,29 +281,37 @@ Verifier obligations are listed below in two groups: per-transaction protocol be
 
 **Verifiers MUST ensure, on every transaction, that:**
 
-1. The Presentation Request Object is sealed (signed) by the Verifier. (Wallet reciprocal: 7.1.4)
-2. Nonces and audience restrictions are generated and included. (Wallet reciprocal: 7.1.8)
-6. All Presentation Responses are validated, including:
-    * Signature of Presentation Proof
-    * Credential authenticity
+1. The Presentation Request Object is signed (JAR, RFC 9101) and conveyed by `request_uri`. The trust anchor certificate MUST NOT appear in the `x5c` JOSE header. (Wallet reciprocal: 7.1.5)
+2. The Client Identifier uses the `x509_hash` prefix exclusively. (Wallet reciprocal: 7.1.6)
+3. A fresh `nonce` is generated and included. (Wallet reciprocal: 7.1.12)
+4. An ephemeral encryption public key, specific to this Authorization Request, is supplied via `client_metadata`. (Wallet reciprocal: 7.1.9)
+5. For redirect-based flows (HAIP §5.1), `response_mode=direct_post.jwt` is used; for DC API flows (HAIP §5.2), `response_mode=dc_api.jwt` is used. In both cases the response is encrypted with `alg=ECDH-ES` and one of `A128GCM` / `A256GCM`.
+6. In the same-device redirect flow, the HTTP response to the Wallet's POST to `response_uri` includes a `redirect_uri`; presentations from Wallets that do not follow the redirect, or whose redirect arrives in a different user session than the one initiating the request, MUST be rejected (HAIP §5.1).
+7. All Presentation Responses are validated, including:
+    * Signature of the Verifiable Presentation (KB-JWT of SD-JWT VC or `deviceSignature` for mdoc)
+    * Credential authenticity via X.509 trust chain (HAIP §6.1.1)
     * Wallet Unit Attestation validity (per HAIP)
     * SD‑JWT‑VC disclosure integrity
-    * Holder binding
+    * Holder binding (KB-JWT)
     * Nonce and audience binding
-    * Satisfaction of request constraints
+    * Satisfaction of request constraints via DCQL
 
-   (Wallet reciprocal: 7.1.5 to 7.1.8)
+   (Wallet reciprocal: 7.1.7, 7.1.8, 7.1.12)
 
 **Verifiers MUST, at deployment:**
 
-3. Support same‑device and cross‑device invocation. (Wallet reciprocal: 7.1.2, 7.1.3)
-4. Publish Verifier Metadata.
-5. Provide a Presentation Response Endpoint. (Wallet reciprocal: 7.1.9)
+8. Support same‑device and cross‑device invocation (HAIP §5.1) AND Wallet Invocation via the W3C Digital Credentials API or an equivalent platform API (HAIP §5.2). (Wallet reciprocal: 7.1.2)
+9. Publish Verifier Metadata, including supported `vp_formats`, the response modes `direct_post.jwt` and `dc_api.jwt`, and both `A128GCM` and `A256GCM` in `encrypted_response_enc_values_supported`.
+10. Use the `x509_hash` Client Identifier Prefix only.
+11. Support at least one of unsigned, signed, or multi-signed Authorization Requests as defined in Appendices A.3.1 and A.3.2 of OpenID4VP for the DC API flow (HAIP §5.2). (Wallet reciprocal: 7.1.10)
+12. Provide a Presentation Response Endpoint (`response_uri`). (Wallet reciprocal: 7.1.13)
 
 Verifiers MUST NOT:
 
 * Request unnecessary personal information
-* Disable nonce or audience validation
+* Disable `nonce` validation
+* Use any Client Identifier prefix other than `x509_hash`
+* Issue invocation URIs that omit a resolvable `client_id` or `request_uri`
 
 # 8. Interface Definitions
 
@@ -297,56 +320,65 @@ Interfaces in this chapter follow the structure from the Issuance Conformance Sp
 ## 8.1 Wallet Invocation Interface
 
 Direction: Verifier → Wallet \
-Transport: `openid4vp://` scheme \
-Usage: Same-device or cross-device scanning
+Transport: `haip-vp://` custom scheme (HAIP v1.0 §5.1 / Appendix A.1.2) OR W3C Digital Credentials API / equivalent platform API (HAIP §5.2) \
+Usage: Same-device, cross-device, or in-browser via DC API
+
+The `haip-vp://` invocation URI MUST include:
+
+* `client_id` with the `x509_hash` prefix (e.g. `client_id=x509_hash:<base64url-cert-thumbprint>`)
+* `request_uri` from which the Wallet fetches the JAR-signed Presentation Request Object
+
+The Wallet MUST reject any invocation URI missing either field.
 
 Example:
 
-
 ```
-openid4vp://present?request_uri=https://verifier.example.org/request/123
+haip-vp://?client_id=x509_hash:<thumbprint>&request_uri=https://verifier.example.org/request/123
 ```
 
-
-Wallet MUST retrieve or validate the Presentation Request Object.
+For DC API invocation, the Verifier MUST follow Appendix A of OpenID4VP. The Wallet MUST support unsigned, signed, and multi-signed requests (Appendices A.3.1 and A.3.2 of OpenID4VP); the Verifier MUST support at least one.
 
 
 ## 8.2 Presentation Request Object Interface
 
 The Presentation Request Object MUST include:
 
-* Verifier identifier (`client_id`)
+* `response_type=vp_token`
+* Verifier identifier (`client_id`) using the `x509_hash` Client Identifier Prefix
+* `response_uri` for the redirect flow (HTTPS, served by the Verifier)
 * `nonce`
-* `audience`
-* Requested credential types
-* Disclosure constraints
-* Proof requirements
-* Expiry
-* Signature (integrity-protected object)
+* `response_mode`: `direct_post.jwt` (redirect flow) or `dc_api.jwt` (DC API flow)
+* `client_metadata` carrying the per-request ephemeral encryption JWK and `encrypted_response_enc_values_supported` listing `A128GCM` and `A256GCM`
+* DCQL query, including `trusted_authorities` with `aki` Authority Key Identifiers (HAIP §5)
+* Expiry (`exp`)
+* JAR signature (RFC 9101). Trust anchor MUST NOT appear in `x5c`
 
 Wallet Units reject incomplete or invalid request objects.
 
 
 ## 8.3 Presentation Response Endpoint
 
-Direction: Wallet → Verifier \
+Direction: Wallet → Verifier (`response_uri`) \
 Method: POST \
-Authentication: MAY use sender-constrained tokens
+Encoding: `application/x-www-form-urlencoded` with a JWE (`alg=ECDH-ES`, `enc=A128GCM` or `A256GCM`) as the `response` parameter (`response_mode=direct_post.jwt`). For DC API flows (`response_mode=dc_api.jwt`), the same JWE is returned through the platform API.
 
-**Request Body Example**
-
-```
-{ "vp_token": "<JWT-Presentation>", "format": "vc+sd-jwt" }
-```
-
-**Success Response Example**
+**Encrypted Response Payload (after decryption) Example**
 
 ```
-{ "status": "ok" }
+{ "vp_token": "<sd-jwt-vc-with-kb>", "state": "<request-state>" }
 ```
+
+The `vp_token` carries the Verifiable Presentation in the requested Credential Format (`dc+sd-jwt` for SD-JWT VC, `mso_mdoc` for mdoc).
+
+**Verifier HTTP Response (same-device redirect flow)**
+
+```
+{ "redirect_uri": "https://verifier.example.org/result/<id>" }
+```
+
+The Wallet MUST follow the returned `redirect_uri` (HAIP §5.1).
 
 **Error Example**
-
 
 ```
 { "error": "invalid_presentation", "error_description": "Nonce invalid or expired" }
@@ -356,13 +388,15 @@ Authentication: MAY use sender-constrained tokens
 
 Verifiers MUST publish metadata containing:
 
-* Presentation_endpoint
-* Supported vp_formats
-* Supported proof mechanisms
-* JWK set for Request signing
-* Required credential types
+* `response_uri` (Presentation Response Endpoint)
+* Supported `vp_formats` (including `dc+sd-jwt` and, where applicable, `mso_mdoc`)
+* Supported response modes (`direct_post.jwt` for redirects, `dc_api.jwt` for DC API)
+* `encrypted_response_enc_values_supported` listing both `A128GCM` and `A256GCM` (HAIP §5)
+* Client Identifier Prefix: `x509_hash` only
+* X.509 certificate chain used for JAR signing (`x5c` in signed request, with trust anchor omitted)
+* Required credential types and `trusted_authorities` (AKI list) for DCQL
 
-Wallet Units retrieves this metadata where available.
+Wallet Units retrieve this metadata where available.
 
 
 # 9. Conformance
@@ -383,10 +417,12 @@ An implementation **conforms to this specification as an Issuer** if it:
 
 # References
 
-[1]	OpenID Foundation (2025). OpenID for Verifiable Credential Issuance 1.0. OpenID Foundation, 16 September. Available at: [https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html) (Accessed: 24 November 2025).
+[1]	OpenID Foundation (2025). OpenID for Verifiable Presentations 1.0. OpenID Foundation, 9 July. Available at: [https://openid.net/specs/openid-4-verifiable-presentations-1_0.html](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html) (Accessed: 20 May 2026).
 
-[2]	OpenID Foundation (2025) OpenID4VC High Assurance Interoperability Profile – draft 03. OpenID Foundation. Available at: [https://openid.net/specs/openid4vc-high-assurance-interoperability-profile-1_0-ID1.html](https://openid.net/specs/openid4vc-high-assurance-interoperability-profile-1_0-ID1.html)  (Accessed: 24 November 2025)
+[2]	OpenID Foundation (2026) OpenID4VC High Assurance Interoperability Profile v1.0. OpenID Foundation. Available at: [https://openid.net/specs/openid4vc-high-assurance-interoperability-profile-1_0.html](https://openid.net/specs/openid4vc-high-assurance-interoperability-profile-1_0.html) (Accessed: 20 May 2026).
 
-[3]	IETF (2025) SD‑JWT‑based Verifiable Credentials. IETF. Available at: https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-09.html (Accessed: 24 November 2025).
+[3]	IETF (2025) SD‑JWT‑based Verifiable Credentials (SD-JWT VC), draft-ietf-oauth-sd-jwt-vc-13. IETF, 6 November. Available at: [https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-13](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-13) (Accessed: 20 May 2026).
 
 [4]	WE BUILD (2025) Interoperability Test Bed - Reference Specification, 12 November, Available at: [https://github.com/webuild-consortium/wp4-interop-test-bed/blob/main/docs/reference-implementation-interoperability-test-bed.md](https://github.com/webuild-consortium/wp4-interop-test-bed/blob/main/docs/reference-implementation-interoperability-test-bed.md) (Accessed: 24 November 2025).
+
+[5]	W3C (2026) Digital Credentials API. W3C Working Draft. Available at: [https://www.w3.org/TR/digital-credentials/](https://www.w3.org/TR/digital-credentials/) (Accessed: 20 May 2026).
