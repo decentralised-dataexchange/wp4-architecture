@@ -55,7 +55,7 @@ This document defines the **WE BUILD Consortium Conformance Specification (CS)**
 It profiles:
 
 * OpenID for Verifiable Credential Issuance (OpenID4VCI) v1.0 [1]
-* The OpenID4VC High Assurance Interoperability Profile (HAIP) 1.0 - Implementers Draft 1 [2]
+* The OpenID4VC High Assurance Interoperability Profile (HAIP) v1.0 [2]
 
 The aim is to ensure that Wallet Units and Credential Issuers within the WE BUILD ecosystem interoperate consistently for the **issuance of SD-JWT-VC credentials** [3] with high security and privacy.
 
@@ -97,12 +97,17 @@ This specification uses the following roles:
 
 The WE BUILD issuance profile is based on the OAuth 2.0 Authorisation Code Flow with the following mandatory features:
 
-* Authorisation Code and Pre-Authorised Code Flow for all issuance interactions
-* OpenID4VCI SD-JWT-VC credential format profile (See NOTE **CS01_01**)
-* Sender-constrained tokens, for example, using Demonstration of Proof of Possession (DPoP) or mutual TLS
-* PKCE with `S256` code challenge method
-* Pushed Authorisation Requests (PAR) for all authorisation requests
-* *Wallet Unit Attestation (WUA) for client authentication as defined in OpenID4VCI-based ADR XX (To be written).*
+* Authorisation Code Flow for all issuance interactions
+* OpenID4VCI SD-JWT-VC credential format profile, Credential Format identifier `dc+sd-jwt` (See NOTE **CS01_01**)
+* Sender-constrained access tokens using Demonstration of Proof of Possession at the Application Layer (DPoP) [5]. Wallets MUST handle the `DPoP-Nonce` HTTP response header from the Credential Issuer's Nonce Endpoint and from other endpoints
+* DPoP MUST be applied at the PAR, Token, Credential and Deferred Credential Endpoints
+* PKCE with `S256` code challenge method (RFC 7636)
+* Pushed Authorisation Requests (PAR, RFC 9126) for all authorisation requests
+* OAuth 2.0 Attestation-Based Client Authentication (Wallet Unit Attestation, WUA) [6] for client authentication, in the format defined in Appendix E of OpenID4VCI
+* RFC 9207 OAuth 2.0 Authorization Server Issuer Identification: the AS MUST include the `iss` value in the Authorization Response and Wallets MUST validate it
+
+> [!NOTE]
+> WUA and DPoP are complementary: WUA provides client authentication (proving *which* client is calling), while DPoP provides sender-constraining at the resource (proving *the same client* that obtained the token is the one using it). WUA does not replace DPoP.
 
 Issuance can be:
 
@@ -156,7 +161,7 @@ This section presents the flows as text-based sequence descriptions.
 1. The WU directs the Holder’s user-agent to the Authorisation Endpoint with the `request_uri` obtained from PAR.
 2. The Holder authenticates to the AS in accordance with the Issuer’s policy.
 3. The Holder consents to the issuance of the requested credential.
-4. The AS redirects back to the WU with an authorisation `code` and `state`.
+4. The AS redirects back to the WU with an authorisation `code`, `state` and the `iss` value identifying the Authorization Server (RFC 9207). The WU MUST validate `iss`.
 
 ### 6.1.5 Token request
 
@@ -213,14 +218,15 @@ This section presents the flows as text-based sequence descriptions.
 
 1.	The Issuer delivers the offer to the Holder by one of:
 
-	* displaying a QR code that encodes a URL which uses the `openid-credential-offer://` scheme to invoke the WU
-   * sending a link that uses the `openid-credential-offer://` scheme to a device with a registered WU
+	* displaying a QR code that encodes a Wallet invocation URL using the `haip-vci://` custom scheme (HAIP v1.0 §4.2 / Appendix A.1.1)
+   * sending a link using the same scheme to a device with a registered WU
+   * implementations MAY additionally support claimed `https` scheme URIs or other ecosystem-agreed schemes
 
 2.	Both same-device and cross-device delivery methods MUST be supported.
 
 ### 6.2.4 WU processes the offer
 
-1.	The WU is invoked via `openid-credential-offer://` and receives the Credential Offer.
+1.	The WU is invoked via `haip-vci://` and receives the Credential Offer.
 
 2.	The WU parses the offer and determines:
    * Issuer base URL
@@ -249,7 +255,7 @@ The Wallet sends a Credential Request (or Batch Request) to the Credential Endpo
 
 If issuance cannot be completed immediately, the Issuer returns:
 
-* `acceptance_token`
+* `transaction_id`
 * optional `interval` (retry hint)
 
 Batch requests may contain both immediate and deferred items.
@@ -261,16 +267,16 @@ Deferred issuance applies to both wallet-initiated and issuer-initiated flows.
 When the Credential Issuer cannot immediately produce one or more credentials:
 
 1. The Issuer returns:
-    * `acceptance_token`
+    * `transaction_id`
     * optional `interval` (retry hint) \
 
-2. The WU MUST store the acceptance_token associated with the pending credential(s). \
+2. The WU MUST store the `transaction_id` associated with the pending credential(s). \
 
-3. The WU periodically retries using the acceptance_token until:
+3. The WU periodically retries the Deferred Credential Endpoint with the `transaction_id` until:
     * the credential is successfully issued, or
-    * The Issuer signals an unrecoverable error. \
+    * the Issuer signals an unrecoverable error. \
 
-4. Batch requests may contain a mix of immediate and deferred items. Each deferred item receives its own acceptance_token and can be polled independently.
+4. Batch requests may contain a mix of immediate and deferred items. Each deferred item receives its own `transaction_id` and can be polled independently.
 
 # 7. Normative Requirements
 
@@ -281,10 +287,13 @@ This section summarises the mandatory requirements for WE BUILD implementations.
 Both WU and Issuer **MUST**:
 
 1. Support the Authorisation Code Flow as the only flow for credential issuance.
-2. Support the SD-JWT-VC credential format profile as defined for OpenID4VCI.
-3. Support sender-constrained tokens, for example, using DPoP or mutual TLS.
-4. Support PKCE with the `S256` code challenge method for all authorisation requests.
-5. Support Wallet-initiated and Issuer-initiated issuance.
+2. Support the SD-JWT-VC credential format with Credential Format identifier `dc+sd-jwt`.
+3. Support DPoP [5] as the sender-constraining mechanism for access tokens, including `DPoP-Nonce` rotation.
+4. Apply DPoP at the PAR, Token, Credential, Nonce and Deferred Credential Endpoints.
+5. Support PKCE with the `S256` code challenge method (RFC 7636) for all authorisation requests.
+6. Support Wallet-initiated and Issuer-initiated issuance.
+7. Support OAuth 2.0 Attestation-Based Client Authentication (WUA) [6] using the Wallet Attestation format in Appendix E of OpenID4VCI as the client authentication mechanism at the PAR and Token Endpoints.
+8. Support RFC 9207 Authorization Server Issuer Identification: the AS MUST include `iss` in the Authorization Response and the WU MUST validate it.
 
 ## 7.2 Credential Offer
 
@@ -293,13 +302,13 @@ Issuers **MUST**:
 1. Support the grant type `authorization_code` in Credential Offers, aligned with OpenID4VCI.
 2. Include a `scope` value for each offered credential type so that the Wallet can identify the correct type and use the same value in the authorisation request.
 3. Support both same-device and cross-device sending of Credential Offers.
-4. Support at least the `openid-credential-offer://` custom URL scheme for Wallet invocation.
+4. Support Wallet invocation via the `haip-vci://` custom URL scheme as defined in HAIP v1.0 §4.2 and Appendix A.1.1.
 
 WUs **MUST**:
 
 1. Be able to parse a Credential Offer that uses `authorization_code` as the grant type.
-2. Use the `scope` value from the offer in the authorisation request.
-3. Support invocation via the `openid-credential-offer://` custom URL scheme.
+2. Use the `scope` value (and/or `credential_configuration_ids`) from the offer in the authorisation request.
+3. Register for and accept invocation via the `haip-vci://` custom URL scheme. Implementations MAY also accept claimed `https` URIs as agreed by the ecosystem.
 
 ## 7.3 Authorisation Endpoint and PAR
 
@@ -314,13 +323,26 @@ WUs **MUST**:
 2. Use the `scope` parameter to indicate the credential type to be issued. Each `scope` value MUST map to a specific credential type that is known from Issuer metadata or from the Credential Offer.
 3. Ensure that the `client_id` in the PAR request matches the `sub` claim in the Wallet attestation JWT used for client authentication.
 
-## 7.4 Token Endpoint and Wallet Attestation
+## 7.4 Token Endpoint, Wallet Attestation and DPoP
 
 WUs **MUST**:
 
-1. Perform client authentication at the Token Endpoint using wallet attestation as defined in Annexe E of the OpenID4VCI specification.
-2. Include the public key, and optionally a trust chain, used to validate the Wallet attestation in the `x5c` JOSE header of the attestation JWT.
-3. Ensure the `sub` claim in the Wallet attestation JWT equals the `client_id` used in PAR and token requests.
+1. Perform client authentication at the Token Endpoint and at PAR using the Wallet Attestation format defined in Appendix E of OpenID4VCI v1.0 (per HAIP v1.0 §4.4.1).
+2. Include the public key certificate, and optionally a trust certificate chain excluding the trust anchor, used to validate the signature on the Wallet Attestation in the `x5c` JOSE header of the Client Attestation JWT.
+3. Ensure the `sub` claim in the Wallet Attestation is a value **shared by all Wallet instances of the same Wallet implementation type** (per HAIP v1.0 §4.4.1 and OpenID4VCI v1.0 §15.4.4). The `sub` MUST NOT be a unique per-instance identifier.
+4. Where applicable, ensure the `client_id` in the PAR request equals the `sub` value in the Client Attestation JWT.
+5. Send a DPoP proof JWT in the `DPoP` HTTP header on the Token Request, with `htm`, `htu`, `iat`, `jti` claims as defined in RFC 9449 [5].
+6. Handle the `DPoP-Nonce` HTTP response header from the Authorization Server, the Credential Issuer Nonce Endpoint, and the Credential Endpoint, replaying the supplied nonce in subsequent DPoP proofs.
+7. Use the same DPoP key on subsequent Credential and Deferred Credential Requests; the Issuer binds the issued `access_token` to that key (`token_type=DPoP`).
+
+Wallet Attestations MUST NOT be reused across different Issuers and MUST NOT introduce a unique identifier specific to a single Wallet instance (HAIP v1.0 §4.4.1).
+
+Issuers **MUST**:
+
+1. Validate the DPoP proof on every Token, Credential and Deferred Credential Request and reject mismatched key bindings.
+2. Issue access tokens with `token_type=DPoP` and bind them via the `cnf.jkt` claim.
+3. Issue and rotate DPoP nonces via the `DPoP-Nonce` HTTP response header on Token, Credential and Nonce Endpoint responses.
+4. Return `authorization_details` in the Token Response (per OpenID4VCI v1.0 §7.3) containing one or more `credential_identifier` values when the Issuer needs to differentiate between multiple instances of the same credential type for the same Holder (for example, multiple credentials of the same type issued with different data). Wallets **MUST** use the returned `credential_identifier` on the corresponding Credential Request.
 
 Issuers **SHOULD**:
 
@@ -330,35 +352,44 @@ Issuers **SHOULD**:
 
 Issuers **MUST**:
 
-1. Support the `JWT` proof type in the Credential Endpoint.
-2. Support the SD-JWT-VC credential format and validate the proof binding between the Wallet subject and credential.
+1. Support the `jwt` proof type with the `key_attestation` parameter AND the `attestation` proof type in the Credential Endpoint (HAIP v1.0 §4.5.1).
+2. Support the SD-JWT-VC credential format with Credential Format identifier `dc+sd-jwt` and validate the proof binding between the Wallet subject and credential.
+3. Validate the DPoP proof on every Credential Request and ensure the access token's `cnf.jkt` matches the DPoP key thumbprint.
+4. Expose a `nonce_endpoint` in Credential Issuer Metadata whenever any supported Credential Configuration declares `cryptographic_binding_methods_supported` (HAIP v1.0 §4.1).
+5. Validate the Key Attestation per OpenID4VCI Appendix D: the public key used to validate the Key Attestation MUST be included in the `x5c` JOSE header; the trust anchor certificate MUST NOT be included in `x5c`.
+6. When `authorization_details` with `credential_identifier` was returned at the Token Endpoint, require the Wallet to identify the requested credential by `credential_identifier` rather than by `format`/`credential_configuration_id` alone.
+7. When batch issuance is used and `cryptographic_binding_methods_supported` is set, all public keys in the Credential Request SHOULD be attested within a single Key Attestation (HAIP v1.0 §4.5.1).
 
 Wallets **MUST**:
 
-1. Send a proof JWT that contains claims required by the Issuer to bind the credential to the Wallet’s subject key.
-2. Validate the returned SD-JWT-VC, including:
-    * signature
+1. Send a proof JWT containing the Key Attestation in the `jwt` proof type's `key_attestation` parameter, or use the dedicated `attestation` proof type, in the format defined in OpenID4VCI Appendix D (HAIP v1.0 §4.5.1).
+2. Include the `Authorization: DPoP {access_token}` header and a matching `DPoP` proof header on every Credential and Deferred Credential Request.
+3. Replay the latest `DPoP-Nonce` value received from the Credential Issuer in subsequent DPoP proofs.
+4. When the Token Response contained `authorization_details` with `credential_identifier`, send the matching `credential_identifier` in the Credential Request.
+5. Validate the returned SD-JWT-VC, including:
+    * signature, anchored via X.509 (issuer signing certificate trust chain in `x5c` JOSE header; trust anchor not in `x5c`) per HAIP v1.0 §6.1.1
     * Issuer identifier
-    * key binding and any status information, according to the SD-JWT-VC profile
+    * key binding (KB-JWT)
+    * status information using `status_list` (Token Status List, draft-ietf-oauth-status-list-14)
 
 ## 7.6 Deferred Credential Endpoint
 
 Issuers **MUST**:
 
 * Support a `deferred_credential_endpoint`.
-* Return `acceptance_token` when issuance is delayed.
-* Validate `acceptance_token` and ensure proper lifetime and binding.
+* Return a `transaction_id` (as defined in OpenID4VCI v1.0 §8.3) when issuance is delayed.
+* Validate `transaction_id` and ensure proper lifetime and binding to the issuance session.
 * Publish endpoint in metadata.
 
 Issuers **SHOULD**:
 
-* Provide clear retry guidance.
-* Return explicit errors when expired or failed.
+* Provide clear retry guidance via the `interval` parameter.
+* Return explicit errors when the `transaction_id` is expired or the credential cannot be issued.
 
 Wallets **MUST**:
 
-* Recognise deferred responses and store the `acceptance_token`.
-* Call the Deferred Credential Endpoint until the credential is ready or the transaction ends.
+* Recognise deferred responses and store the `transaction_id`.
+* Call the Deferred Credential Endpoint with the `transaction_id` until the credential is ready or the transaction ends.
 * Distinguish *pending* vs *failed* issuance in UI.
 
 Wallets **SHOULD**:
@@ -371,15 +402,20 @@ Wallets **SHOULD**:
 
 Issuers **MUST** publish metadata that includes:
 
-1. OAuth 2.0 and OpenID configuration, including Authorisation, Token and PAR endpoints.
-2. Credential Issuer metadata that describes:
+1. OAuth 2.0 Authorization Server Metadata (RFC 8414), including Authorisation, Token, PAR, Nonce and Deferred Credential endpoints.
+2. Credential Issuer metadata (`/.well-known/openid-credential-issuer`) that describes:
     * all supported credential types
     * a mapping from each credential type to a unique `scope` value
+    * `cryptographic_binding_methods_supported` for each Credential Configuration that requires holder binding
+    * `nonce_endpoint` when any supported Credential Configuration sets `cryptographic_binding_methods_supported` (HAIP v1.0 §4.1)
+    * `batch_credential_issuance` parameter indicating whether batch issuance is supported (HAIP v1.0 §4)
+3. Signed Credential Issuer Metadata (`signed_metadata` JWT) as specified in OpenID4VCI v1.0 §11.2.3 and required by HAIP v1.0 §4.1 when Ecosystem policies require Issuer authentication beyond TLS. The signing certificate MUST be included in the `x5c` JOSE header per RFC 7515. The X.509 certificate of the trust anchor MUST NOT be included in `x5c`.
 
 Wallets **MUST**:
 
 1. Retrieve and process Issuer metadata, including the mapping from credential type to `scope`.
-2. Use this mapping when constructing authorisation requests and when interpreting Credential Offers.
+2. When `signed_metadata` is present, validate the signature using X.509 key resolution from the `x5c` JOSE header and reject unsigned or untrusted metadata.
+3. Use the metadata when constructing authorisation requests and when interpreting Credential Offers.
 
 # 8. Interface Definitions
 
@@ -389,17 +425,18 @@ This section defines the logical interfaces for conformance. Exact URL paths are
 ## 8.1 WU Invocation Interface
 
 * **Direction**: Issuer to Wallet
-* **Transport**: custom URL scheme and optional QR code
+* **Transport**: `haip-vci://` custom URL scheme (HAIP v1.0 §4.2 / Appendix A.1.1), optional QR code
 * **Requirement**:
-	* Wallets and Issuers MUST support the `openid-credential-offer://` scheme as a minimal mechanism to invoke Wallets in both same-device and cross-device scenarios
+	* Wallets and Issuers MUST support the `haip-vci://` scheme in both same-device and cross-device scenarios
+	* Implementations MAY additionally support claimed `https` scheme URIs
 
-**Example (illustrative)** 
+**Example (illustrative)**
 
 ```
-openid-credential-offer://credential-offer?request_uri=...
+haip-vci://?credential_offer_uri=https://issuer.example.org/offer/abc
 ```
 
-The concrete parameters and encoding follow HAIP and OpenID4VCI guidance on Credential Offers.
+The concrete parameters and encoding follow HAIP v1.0 and OpenID4VCI v1.0 Credential Offer rules.
 
 ## 8.2 Credential Offer Interface
 
@@ -423,19 +460,21 @@ The exact JSON structure MUST comply with OpenID4VCI Credential Offer definition
 **Request (logical fields)**
 
 * `client_id`
-* `scope`
+* `scope` and/or `authorization_details`
 * `code_challenge` using PKCE `S256`
 * `code_challenge_method=S256`
 * `redirect_uri`
 * `response_type=code`
 * `state`, `nonce`
+* Client authentication: `client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-client-attestation` and `client_assertion` carrying the WUA [6]
+* `DPoP` HTTP header carrying the DPoP proof JWT [5]
 
 **Response**
 
 * `request_uri`
 * `expires_in`
 
-All PAR requests MUST be client-authenticated according to Section 7.4.
+All PAR requests MUST be client-authenticated using WUA and DPoP-bound according to Section 7.4.
 
 
 ## 8.4 Token Endpoint
@@ -449,13 +488,15 @@ All PAR requests MUST be client-authenticated according to Section 7.4.
 * `code`
 * `redirect_uri`
 * `code_verifier`
-* client authentication using Wallet attestation JWT, for example, `client_assertion` and `client_assertion_type`
+* Client authentication using WUA: `client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-client-attestation` and `client_assertion`
+* `DPoP` HTTP header carrying the DPoP proof JWT bound to the Token Endpoint URL
 
 **Response**
 
-* `access_token` (sender-constrained)
-* `token_type`
+* `access_token` (DPoP-bound, `cnf.jkt` set)
+* `token_type=DPoP`
 * `expires_in`
+* `authorization_details` (per OpenID4VCI v1.0) MAY include one or more `credential_identifier` values when the Holder is entitled to multiple credentials of the same type with different data
 * optional `refresh_token`
 
 ## 8.5 Credential Endpoint
@@ -464,10 +505,11 @@ All PAR requests MUST be client-authenticated according to Section 7.4.
 * **Method**: `POST`
 **Request (logical fields)**
 
-* HTTP header: `Authorization: Bearer {access_token}`
+* HTTP headers:
+    * `Authorization: DPoP {access_token}`
+    * `DPoP: {dpop-proof-jwt}` bound to this endpoint
 * Body:
-    * `format` (for example, `vc+sd-jwt` or the identifier used in the chosen SD-JWT-VC profile)
-    * identification of the requested credential configuration
+    * `credential_identifier` (REQUIRED when returned by the Token Endpoint in `authorization_details`) **OR** `credential_configuration_id` / `format` (for example, `dc+sd-jwt`) when no `authorization_details` was returned
     * `proof` object with:
         * `proof_type="jwt"`
         * `jwt` containing proof claims
@@ -481,11 +523,12 @@ All PAR requests MUST be client-authenticated according to Section 7.4.
 **Method:** POST
 **Request (logical fields)**
 
-* HTTP header:
-    * `Authorization: Bearer {token}`
+* HTTP headers:
+    * `Authorization: DPoP {access_token}`
+    * `DPoP: {dpop-proof-jwt}` bound to this endpoint
     * `Content-Type: application/json`
 * Body parameters:
-* `transaction_id`
+    * `transaction_id`
 
 **Response**
 
@@ -514,12 +557,18 @@ If the Deferred Credential Request is invalid, the Issuer returns an error respo
 
 Issuers **MUST** publish:
 
-* OpenID Provider and OAuth discovery document
-* Credential Issuer metadata document
+* OAuth 2.0 Authorization Server Metadata (RFC 8414)
+* Credential Issuer metadata document at `/.well-known/openid-credential-issuer`, including `signed_metadata` per HAIP v1.0 §4.1 (with `x5c` JOSE header; trust anchor not in `x5c`)
 
 The latter MUST include:
 * supported credential types
 * for each type, the associated `scope` value
+* `cryptographic_binding_methods_supported` where holder binding is required
+* `nonce_endpoint` when any Credential Configuration requires holder binding (HAIP v1.0 §4.1)
+* the `deferred_credential_endpoint` when deferred issuance is supported
+* the `batch_credential_issuance` parameter when batch issuance is supported
+
+Wallets **MUST** validate `signed_metadata` when present and reject unsigned or untrusted metadata.
 
 WU uses these documents for dynamic configuration.
 
@@ -541,10 +590,20 @@ Profiles may define additional constraints for specific WE BUILD credential type
 
 # References
 
-[1]	OpenID Foundation (2025) OpenID for Verifiable Presentations 1.0. OpenID Foundation. Available at: [https://openid.net/specs/openid-4-verifiable-presentations-1_0.html](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html) (Accessed: 24 November 2025).
+[1]	OpenID Foundation (2025) OpenID for Verifiable Credential Issuance 1.0. OpenID Foundation. Available at: [https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html) (Accessed: 20 May 2026).
 
-[2]	OpenID Foundation (2025) OpenID4VC High Assurance Interoperability Profile – draft 03. OpenID Foundation. Available at: [https://openid.net/specs/openid4vc-high-assurance-interoperability-profile-1_0-ID1.html](https://openid.net/specs/openid4vc-high-assurance-interoperability-profile-1_0-ID1.html)  (Accessed: 24 November 2025)
+[2]	OpenID Foundation (2026) OpenID4VC High Assurance Interoperability Profile v1.0. OpenID Foundation. Available at: [https://openid.net/specs/openid4vc-high-assurance-interoperability-profile-1_0.html](https://openid.net/specs/openid4vc-high-assurance-interoperability-profile-1_0.html) (Accessed: 20 May 2026).
 
-[3] IETF (2025) SD‑JWT‑based Verifiable Credentials. IETF. Available at: https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-09.html (Accessed: 24 November 2025).
+[3] IETF (2025) SD‑JWT‑based Verifiable Credentials (SD-JWT VC), draft-ietf-oauth-sd-jwt-vc-13. IETF, 6 November. Available at: [https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-13](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-13) (Accessed: 20 May 2026).
 
 [4]	WE BUILD (2025) Interoperability Test Bed - Reference Specification, 12 November, Available at: [https://github.com/webuild-consortium/wp4-interop-test-bed/blob/main/docs/reference-implementation-interoperability-test-bed.md](https://github.com/webuild-consortium/wp4-interop-test-bed/blob/main/docs/reference-implementation-interoperability-test-bed.md) (Accessed: 24 November 2025).
+
+[5]	IETF (2023) RFC 9449 - OAuth 2.0 Demonstrating Proof of Possession (DPoP). Available at: [https://www.rfc-editor.org/rfc/rfc9449.html](https://www.rfc-editor.org/rfc/rfc9449.html) (Accessed: 20 May 2026).
+
+[6]	IETF (2026) OAuth 2.0 Attestation-Based Client Authentication, draft-ietf-oauth-attestation-based-client-auth-08. Available at: [https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-08.html](https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-08.html) (Accessed: 20 May 2026).
+
+[7]	IETF (2022) RFC 9207 - OAuth 2.0 Authorization Server Issuer Identification. Available at: [https://www.rfc-editor.org/rfc/rfc9207.html](https://www.rfc-editor.org/rfc/rfc9207.html) (Accessed: 20 May 2026).
+
+[8]	IETF (2021) RFC 9126 - OAuth 2.0 Pushed Authorization Requests. Available at: [https://www.rfc-editor.org/rfc/rfc9126.html](https://www.rfc-editor.org/rfc/rfc9126.html) (Accessed: 20 May 2026).
+
+[9]	IETF (2025) Token Status List (TSL), draft-ietf-oauth-status-list-14. Available at: [https://datatracker.ietf.org/doc/html/draft-ietf-oauth-status-list-14](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-status-list-14) (Accessed: 20 May 2026).
