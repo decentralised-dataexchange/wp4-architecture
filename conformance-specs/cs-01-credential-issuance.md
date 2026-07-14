@@ -320,7 +320,7 @@ The primary re-issuance mechanism is the OpenID4VCI Refresh Token grant at the T
 3. The Token Endpoint validates the refresh token, the DPoP proof and the WIA, verifies that re-issuance is to the same WU as the existing attestation, and returns:
         * a new sender-constrained `access_token`
         * a rotated `refresh_token` for the next re-issuance
-4. The WU sends a Credential Request to the Credential Endpoint as in section 6.1.6, presenting a fresh Key Attestation where required, so that the Issuer can verify that the re-issued device-bound attestation is bound to the same WSCA/WSCD as the attestation it replaces (section 7.8).
+4. The WU sends a Credential Request to the Credential Endpoint as in section 6.1.6, using the new access token, and presenting a fresh Key Attestation where required, so that the Issuer can verify that the re-issued device-bound attestation is bound to the same WSCA/WSCD as the attestation it replaces (section 7.8).
 5. The Issuer returns the re-issued attestation in the profiled credential format.
 6. The WU validates and stores the re-issued attestation, compares its attribute values with those of the existing attestation and notifies the User of any differences, and deletes the replaced attestation after successful re-issuance (section 7.8).
 
