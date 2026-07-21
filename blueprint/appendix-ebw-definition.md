@@ -90,6 +90,39 @@ To enable public and private sector information exchange, such as in B2G eGovern
 
 **_WE BUILD implementation note:_** _the WP4 QTSP group will explore delivering an interoperable pre-production QERDS, along with CIR (EU) 2025/1944 requirements, as a service to the WP4 Wallet Providers group, working with the WP4 Architecture group on cross-cutting concerns, such as interoperability specifications. This enables wallet providers to provide a business wallet to the use cases with a digital address and access to the designated QERDS. For reference, see the [QERDS documentation](#qerds-documentation)._
 
+##### When does QERDS apply
+
+_**TODO**_
+
+##### High-level architecture
+
+````mermaid
+flowchart LR
+    RP(Relying Party) -->|Validates delivery|QP[QERDS Provider]
+    QP -->|Provides the QERDS|BWU[Business Wallet Unit]
+    BA(Business Application) -->|Uses API|BWU
+    U(User) -->|Uses UI|BWU
+    BWU -->|Discovers services and capabilities|DD[Digital Directory]
+    BWU -.->|Shares data|Q1
+    subgraph QERDS 4-corner secure channel
+        Q1[QTSP 1] -.-> Q2[QTSP2]
+    end
+    Q2 -.-> BWU2[Business Wallet Unit]
+````
+
+##### Communication protocol: WMP
+
+_**TODO**_
+
+##### WE BUILD Conformance Specifications mapping
+
+_**TODO:** Add the conformance specs links below_
+
+ - Delivery validation &mdash; [CSXX: RP-QERDS validation]()
+ - QERDS Provider &mdash; [CSXX: Inter-QTSP Message Relay]()
+ - QERDS provision &mdash; [CSXX: EBW-QERDS API and protocol]()
+ - Services discovery &mdash; [CSXX: Digital Directory API]()
+
 #### Access control mechanism
 
 To enable wallet owners, authorised representatives and other authorised users to access the business wallet while preventing unauthorised access, each business wallet implements role-based access control for the assets it protects, including digital documents and the secure communication channel. To identify, authenticate, and authorise wallet users, the access control mechanism relies on electronic identification means, such as digital identity wallets, and, potentially, on trust services for the electronic attestation of attributes.
