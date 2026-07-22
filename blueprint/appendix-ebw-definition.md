@@ -92,7 +92,12 @@ To enable public and private sector information exchange, such as in B2G eGovern
 
 ##### When does QERDS apply
 
-_**TODO**_
+| QERDS applies when | QERDS does **not** apply when |
+| --- | --- |
+| Business documents and legal notifications needs to be exchanged. | The scenario is mainly a issuance/verification flow following a issuer-holder-verifier model. |
+| A signed evidence handover is needed. | The flow only includes attestation of attributes. |
+| The flow is wallet-centric or system-to-system. | The use case does not require handover evidence. |
+
 
 ##### High-level architecture
 
@@ -105,14 +110,19 @@ flowchart LR
     BWU -->|Discovers services and capabilities|DD[Digital Directory]
     BWU -.->|Shares data|Q1
     subgraph QERDS 4-corner secure channel
-        Q1[QTSP 1] -.-> Q2[QTSP2]
+        Q1[QTSP 1] -.-> Q2[QTSP 2]
     end
     Q2 -.-> BWU2[Business Wallet Unit]
 ````
 
 ##### Communication protocol: WMP
 
-_**TODO**_
+````mermaid
+flowchart LR
+    B1(Sender Business Wallet) -->|WMP|Q1[Sender QERDS]
+    Q1 -->|AS4| Q2[Recipient QERDS]
+    Q2 -->|WMP| B2(Recipient Business Wallet)
+````
 
 ##### WE BUILD Conformance Specifications mapping
 
