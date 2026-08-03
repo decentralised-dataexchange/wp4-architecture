@@ -169,21 +169,18 @@ This section presents the flows as text-based sequence descriptions.
 1. The Holder chooses a credential type, for example, a PID, QEAA or business credential.
 2. The WU selects the appropriate Issuer and the corresponding `scope` value.
 
-
 ### 6.1.3 Pushed Authorisation Request (PAR)
 
 1. The WU constructs an authorisation request containing, at a minimum:
-        * `client_id`
-        * `scope` identifying the credential type
-        * `code_challenge` using PKCE `S256`
-        * `redirect_uri`
-        * `response_type=code`
-        * `state`
-        * `nonce`
+	* `client_id`
+ 	* `scope` identifying the credential type
+	* `code_challenge` using PKCE `S256`
+ 	* `redirect_uri`
+    * `response_type=code`
+    * `state`
+    * `nonce`
 1. The WU sends this request to the Issuer’s PAR endpoint, with client authentication bound to the WUA. \
-
 2. The PAR endpoint returns a `request_uri` and a validity period.
-
 
 ### 6.1.4 User authorisation
 
@@ -195,28 +192,28 @@ This section presents the flows as text-based sequence descriptions.
 ### 6.1.5 Token request
 
 1. The WU sends a token request to the Token Endpoint, including:
-        * `grant_type=authorization_code`
-        * `code`
-        * `redirect_uri`
-        * `code_verifier` matching the earlier `code_challenge`
-        * client authentication using WUA
+   * `grant_type=authorization_code`
+   * `code`
+   * `redirect_uri`
+   * `code_verifier` matching the earlier `code_challenge`
+   * client authentication using WUA
 2. The Token Endpoint validates the request and returns:
-        * sender-constrained `access_token`
-        * optional `refresh_token` for credential refresh
+   * sender-constrained `access_token`
+   * optional `refresh_token` for credential refresh
 
 ### 6.1.6 Credential request
 
 1. The WU sends a request to the Credential Endpoint containing:
-        * `Authorization: Bearer {access_token}`
-        * the requested credential format (SD-JWT-VC; see NOTE **CS01_01**)
-        * a `proof` object using the `JWT` proof type that binds the credential to the WU’s subject key
+	* `Authorization: Bearer {access_token}`
+ 	* the requested credential format (SD-JWT-VC; see NOTE **CS01_01**)
+  	* a `proof` object using the `JWT` proof type that binds the credential to the WU’s subject key
 
-2. The Credential Issuer validates:
-        * the access token and its sender-constraining mechanism
-        * the proof JWT
-        * issuance policy
+3. The Credential Issuer validates:
+	* the access token and its sender-constraining mechanism
+ 	* the proof JWT
+  	* issuance policy
 
-3. The Issuer returns the issued SD-JWT-VC.
+5. The Issuer returns the issued SD-JWT-VC.
 
 
 ### 6.1.7 Storage
@@ -343,16 +340,16 @@ The primary re-issuance mechanism is the OpenID4VCI Refresh Token grant at the T
 
 1. During the original issuance, the Issuer returns a `refresh_token` alongside the `access_token` (section 6.1.5). The refresh token is sender-constrained (DPoP-bound) and bound to the WU that received the original attestation (section 7.8).
 2. When a re-issuance trigger occurs, the WU sends a token request to the Token Endpoint, including:
-        * `grant_type=refresh_token`
-        * the `refresh_token` issued during the previous exchange
-        * a DPoP proof using the key to which the refresh token is bound
-        * client authentication using the WIA, as at the original Token Request (section 7.4)
-3. The Token Endpoint validates the refresh token, the DPoP proof and the WIA, verifies that re-issuance is to the same WU as the existing attestation, and returns:
-        * a new sender-constrained `access_token`
-        * a rotated `refresh_token` for the next re-issuance
-4. The WU sends a Credential Request to the Credential Endpoint as in section 6.1.6, using the new access token, and presenting a fresh Key Attestation where required, so that the Issuer can verify that the re-issued device-bound attestation is bound to the same WSCA/WSCD as the attestation it replaces (section 7.8).
-5. The Issuer returns the re-issued attestation in the profiled credential format.
-6. The WU validates and stores the re-issued attestation, compares its attribute values with those of the existing attestation and notifies the User of any differences, and deletes the replaced attestation after successful re-issuance (section 7.8).
+   * `grant_type=refresh_token`
+   * the `refresh_token` issued during the previous exchange
+   * a DPoP proof using the key to which the refresh token is bound
+   * client authentication using the WIA, as at the original Token Request (section 7.4)
+4. The Token Endpoint validates the refresh token, the DPoP proof and the WIA, verifies that re-issuance is to the same WU as the existing attestation, and returns:
+   * a new sender-constrained `access_token`
+   * a rotated `refresh_token` for the next re-issuance
+5. The WU sends a Credential Request to the Credential Endpoint as in section 6.1.6, using the new access token, and presenting a fresh Key Attestation where required, so that the Issuer can verify that the re-issued device-bound attestation is bound to the same WSCA/WSCD as the attestation it replaces (section 7.8).
+6. The Issuer returns the re-issued attestation in the profiled credential format.
+7. The WU validates and stores the re-issued attestation, compares its attribute values with those of the existing attestation and notifies the User of any differences, and deletes the replaced attestation after successful re-issuance (section 7.8).
 
 Because no authorisation code is involved, no front-channel User interaction takes place in this flow.
 
