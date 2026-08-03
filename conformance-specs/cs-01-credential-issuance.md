@@ -1,11 +1,12 @@
 # WE BUILD - Conformance Specification:  Credential Issuance
 
 Version 1.1
-Date: 10 July 2026
+Date: 03 August 2026
 
 **Revision history**
 
-* Version 1.1 (10 July 2026): Added the re-issuance chapter, resolving issue [#244](https://github.com/webuild-consortium/wp4-architecture/issues/244).
+* Version 1.2 (15 July 2026): Added the re-issuance chapter, resolving issue [#244](https://github.com/webuild-consortium/wp4-architecture/issues/244).
+* Version 1.1 (10 July 2026): Added the pre-authorised code-flow to support payments
 * Version 1.0 (28 November 2025): Initial version.
 
 **Authors / Contributors**: WP4 Architecture
@@ -15,6 +16,7 @@ Date: 10 July 2026
 * George J Padayatti, iGrant.io, Sweden
 * Nikolaos Triantafyllou, University of Aegean, Greece
 * Malin Norlander, Bolagsverket, Sweden
+* Tomasz Blachowicz, Mastercard, Poland
 
 Table Of Contents
 
@@ -38,9 +40,9 @@ Table Of Contents
     - [6.2.2 Credential Offer creation](#622-credential-offer-creation)
     - [6.2.3 Credential Offer delivery and Wallet invocation](#623-credential-offer-delivery-and-wallet-invocation)
     - [6.2.4 WU processes the offer](#624-wu-processes-the-offer)
-    - [6.2.5 Authorisation and token exchange](#625-authorisation-and-token-exchange)
-    - [6.2.6 Credential Request](#626-credential-request)
-    - [6.2.7 Deferred Credential Request](#627-deferred-credential-request)
+    - [6.2.5 Authorisation and token exchange (Authorisation Code grant)](#625-authorisation-and-token-exchange-authorisation-code-grant)
+    - [6.2.6 Token request (Pre-Authorised Code grant)](#626-token-request-pre-authorised-code-grant)
+    - [6.2.7 Credential Request, validation and storage](#627-credential-request-validation-and-storage)
   - [6.3 Deferred Credential Request](#63-deferred-credential-request)
   - [6.4 Re-issuance Flow](#64-re-issuance-flow)
     - [6.4.1 Re-issuance triggers](#641-re-issuance-triggers)
@@ -91,8 +93,8 @@ This specification defines:
     * Credential Issuers and their Authorisation Servers
 * Support for:
     * Wallet-initiated issuance
-    * Issuer-initiated issuance via Credential Offer
     * Re-issuance of previously issued attestations
+    * Issuer-initiated issuance via Credential Offer, using the Authorisation Code grant or the Pre-Authorised Code grant
 
 This document describes:
 
@@ -115,24 +117,36 @@ This specification uses the following roles:
 
 # 5. Protocol Overview
 
-The WE BUILD issuance profile is based on the OAuth 2.0 Authorisation Code Flow with the following mandatory features:
+The WE BUILD issuance profile is based on the OAuth 2.0 Authorisation Code Flow and the OpenID4VCI Pre-Authorised Code Flow (grant type `urn:ietf:params:oauth:grant-type:pre-authorized_code`) with the following mandatory features:
 
-* Authorisation Code and Pre-Authorised Code Flow for all issuance interactions
+* Authorisation Code Flow for Wallet-initiated and Issuer-initiated issuance, and Pre-Authorised Code Flow for Issuer-initiated issuance (See NOTES **CS01_02**, **CS01_03**, **CS01_04** and **CS01_05**)
 * OpenID4VCI SD-JWT-VC credential format profile (See NOTE **CS01_01**)
 * Sender-constrained tokens, for example, using Demonstration of Proof of Possession (DPoP) or mutual TLS
-* PKCE with `S256` code challenge method
-* Pushed Authorisation Requests (PAR) for all authorisation requests
-* Wallet Unit Attestation (WUA = WIA + KA), per ARF 2.9 [6] and TS-03 [5] and profiled in CS-04 [7]: the WIA is used for client authentication and session binding at the PAR and Token endpoints, and the KA for key binding at the Credential Endpoint
+* PKCE with `S256` code challenge method for all authorisation requests (Authorisation Code Flow)
+* Pushed Authorisation Requests (PAR) for all authorisation requests (Authorisation Code Flow; the Pre-Authorised Code Flow does not use the Authorisation Endpoint and therefore involves no authorisation request)
+* Wallet Unit Attestation (WUA = WIA + KA), per ARF 2.9 [6] and TS-03 [5] and profiled in CS-04 [7]: the WIA is used for client authentication and session binding at the PAR and Token endpoints (Authorisation Code Flow) or at the Token endpoint (Pre-Authorised Code Flow), and the KA for key binding at the Credential Endpoint
 
 Issuance can be:
 
 * **Wallet-initiated**: the Holder starts from the WU and selects a credential type
-* **Issuer-initiated**: the Issuer provides a **Credential Offer** that the WU consumes
+* **Issuer-initiated**: the Issuer provides a **Credential Offer** that the WU consumes, using either the Authorisation Code grant or the Pre-Authorised Code grant
 
 Both modes are required in this profile.
 
 > [!NOTE]
-> CS01_01: ISO18013-5 and ISO18013-7 will be supported in subsequent versions, based on use-case requirements.
+> **CS01_01**: ISO18013-5 and ISO18013-7 will be supported in subsequent versions, based on use-case requirements.
+
+> [!NOTE]
+> **CS01_02**: HAIP [2] mandates only the Authorisation Code Flow. Support for the Pre-Authorised Code Flow is a WE BUILD extension profiled directly on OpenID4VCI [1], for Issuer-initiated use cases where the Issuer has authenticated the Holder and prepared the issuance before the Wallet interaction starts; it is therefore used for Issuer-initiated issuance only (section 7.1).
+
+> [!NOTE]
+> **CS01_03**: OpenID4VCI [1] makes the Transaction Code (`tx_code`) OPTIONAL at the protocol level, but section 13.6.1 states that Pre-Authorised Code replay "must be prevented using other means" and names the Transaction Code as the single mitigation the design facilitates for that purpose. The other controls available in this profile, namely short-lived single-use codes and WIA client authentication, restrict redemption to attested Wallet Units but do not bind the code to the intended Holder (NOTE **CS01_04**). This profile therefore REQUIRES a Transaction Code for every Credential Offer that uses the Pre-Authorised Code grant, delivered via a channel separate from the Credential Offer (sections 7.2 and 7.4).
+
+> [!NOTE]
+> **CS01_04**: The Pre-Authorised Code Flow provides no PKCE-like mechanism to protect the Pre-Authorised Code. Unlike the authorisation code, which is bound to the WU session via PKCE and to the DPoP key via `dpop_jkt` at PAR (section 7.3), the Pre-Authorised Code is not bound to a session or key, so anyone who obtains a valid code can attempt to redeem it (OpenID4VCI [1], section 13.6.1). The WIA client authentication required at the Token Endpoint (section 7.4) restricts redemption to attested Wallet Units but does not bind the code to the intended Holder: an attacker who obtains the code, for example by scanning a QR code over the Holder's shoulder, can redeem it in their own attested Wallet Unit. Pre-Authorised Codes are therefore short-lived and single-use (section 7.2), and a Transaction Code is REQUIRED to bind the code to the Holder (NOTE **CS01_03**).
+
+> [!NOTE]
+> **CS01_05**: OpenID4VCI [1] section 13.6.2 describes a Transaction Code phishing attack, in which an attacker operating a Credential Issuer site induces the Holder to enter into the Wallet a Transaction Code issued by an unrelated service, such as a payment service, and thereby obtains access to that service. OpenID4VCI RECOMMENDS that Wallets interact with trusted Credential Issuers only, and states that the Wallet MAY show the End-User the Credential Issuer endpoint before the Transaction Code is sent. Because this profile requires a Transaction Code for the Pre-Authorised Code grant (NOTE **CS01_03**), both mitigations are profiled as normative requirements in section 7.2.
 
 # 6. High-level Flows
 
@@ -213,21 +227,28 @@ This section presents the flows as text-based sequence descriptions.
 
 ## 6.2 Issuer-initiated Issuance via Credential Offer
 
-**Actors**: Holder, WU, Issuer.
+**Actors**: Holder, WU, Issuer (AS and Credential Issuer).
+
+Issuer-initiated issuance always starts from a **Credential Offer**. The offer carries the `authorization_code` grant, the `urn:ietf:params:oauth:grant-type:pre-authorized_code` grant, or both (section 8.2). Sections 6.2.1 to 6.2.4 are common to both grants. The flows diverge only at the token step, 6.2.5 for the Authorisation Code grant and 6.2.6 for the Pre-Authorised Code grant, and converge again at 6.2.7.
+
+Where the Pre-Authorised Code grant is used, the Issuer authenticates the Holder and prepares the issuance **before** the Wallet interaction starts. That grant does not use the Authorisation Endpoint or PAR: the WU exchanges the Pre-Authorised Code for an Access Token directly at the Token Endpoint (OpenID4VCI [1], Pre-Authorized Code Flow). Because there is no authorisation request, no PKCE-like mechanism protects the Pre-Authorised Code (see NOTE **CS01_04**).
 
 ### 6.2.1 Issuance decision
 
-1. The Holder interacts with the Issuer, for example, digital onboarding, customer due diligence or contract signing.
-
-2. Following successful internal checks, the Issuer decides to issue one or more credentials.
+1. The Holder interacts with the Issuer through an Issuer-specific business process, for example, digital onboarding, customer due diligence or contract signing.
+2. As part of this process, the Issuer authenticates the Holder and obtains the consent and data required for issuance. How this is done is out of scope of this specification.
+3. Following successful internal checks, the Issuer decides to issue one or more credentials.
 
 ### 6.2.2 Credential Offer creation
 
-1. The Issuer constructs a **Credential Offer object** that includes:
+1. The Issuer constructs a **Credential Offer object** (section 8.2) that includes:
    * the `credential_issuer` identifier
-   * grant information for the `authorization_code` grant type
-   * one or more identifiers for supported credential types
-   * for each type, a `scope` value that maps unambiguously to that credential type
+   * `credential_configuration_ids`: one or more identifiers, each matching a key in `credential_configurations_supported` in the Credential Issuer metadata (section 7.7)
+   * a `grants` object carrying one or both of:
+     * `authorization_code`, optionally with `issuer_state`
+     * `urn:ietf:params:oauth:grant-type:pre-authorized_code`, containing a short-lived, single-use `pre-authorized_code` and a `tx_code` object (section 7.2)
+
+2. Where the offer uses the Pre-Authorised Code grant, the Issuer generates the Transaction Code and delivers it to the Holder via a channel **separate** from the Credential Offer, for example, by text message or email (section 7.2, NOTE **CS01_03**).
 
 ### 6.2.3 Credential Offer delivery and Wallet invocation
 
@@ -242,21 +263,38 @@ This section presents the flows as text-based sequence descriptions.
 
 1.	The WU is invoked via `openid-credential-offer://` and receives the Credential Offer.
 
-2.	The WU parses the offer and determines:
+2. The WU verifies that the `credential_issuer` value identifies a trusted Credential Issuer, and terminates processing otherwise (section 7.2, NOTE **CS01_05**).
+
+3.	The WU parses the offer and determines:
    * Issuer base URL
- * offered credential types
- * associated `scope` values used for authorisation 
+   * the offered `credential_configuration_ids`
+   * which grant type(s) the offer carries, and for the Pre-Authorised Code grant the `pre-authorized_code` and the `tx_code` requirements (`input_mode`, `length`, `description`)
 
-3. The WU displays the offer to the Holder and asks for confirmation to proceed.
+4. The WU retrieves Issuer metadata and resolves each `credential_configuration_ids` value against `credential_configurations_supported`, obtaining the credential type and, for the Authorisation Code grant, the `scope` value to use in the authorisation request (section 7.7).
 
+5. The WU displays the offer to the Holder and asks for confirmation to proceed.
 
-### 6.2.5 Authorisation and token exchange
+### 6.2.5 Authorisation and token exchange (Authorisation Code grant)
 
-1. The WU initiates the Authorisation Code Flow using PAR as defined in Section 6.1, reusing `scope` values from the offer.
+1. The WU initiates the Authorisation Code Flow using PAR as defined in Section 6.1, using the `scope` values resolved in 6.2.4 and including `issuer_state` unchanged where the offer provided one.
 
 2. The remainder of the flow, including authorisation, token request, credential request and storage, is identical to the Wallet-initiated flow.
 
-### 6.2.6 Credential Request
+### 6.2.6 Token request (Pre-Authorised Code grant)
+
+1. The WU prompts the Holder to enter the Transaction Code received from the Issuer, rendering the input screen according to the `tx_code` object and displaying its `description` where present. Before submitting, the WU displays the Credential Issuer endpoint to which the Transaction Code will be sent (section 7.2, NOTE **CS01_05**).
+
+2. The WU sends a token request directly to the Token Endpoint, without any prior Authorisation Endpoint or PAR interaction, including:
+   * `grant_type=urn:ietf:params:oauth:grant-type:pre-authorized_code`
+   * `pre-authorized_code` from the Credential Offer
+   * `tx_code` entered by the Holder
+   * client authentication using WUA
+
+3. The Token Endpoint validates the Pre-Authorised Code and the Transaction Code, and returns:
+   * sender-constrained `access_token`
+   * optional `refresh_token` for credential refresh
+
+### 6.2.7 Credential Request, validation and storage
 
 The Wallet sends a Credential Request (or Batch Request) to the Credential Endpoint, including:
 
@@ -264,15 +302,7 @@ The Wallet sends a Credential Request (or Batch Request) to the Credential Endpo
 * SD‑JWT‑VC configuration
 * `proof` object
 
-
-### 6.2.7 Deferred Credential Request
-
-If issuance cannot be completed immediately, the Issuer returns:
-
-* `transaction_id`
-* optional `interval` (retry hint)
-
-Batch requests may contain both immediate and deferred items.
+Credential validation and storage are identical to the Wallet-initiated flow, Sections 6.1.6 and 6.1.7. Deferred issuance applies as described in Section 6.3.
 
 ## 6.3 Deferred Credential Request
 
@@ -341,29 +371,53 @@ This section summarises the mandatory requirements for WE BUILD implementations.
 
 Both WU and Issuer **MUST**:
 
-1. Support the Authorisation Code Flow as the only flow for credential issuance.
+1. Support the Authorisation Code Flow for Wallet-initiated and Issuer-initiated credential issuance. Grant types other than `authorization_code` and `urn:ietf:params:oauth:grant-type:pre-authorized_code` MUST NOT be used for credential issuance.
 2. Support the SD-JWT-VC credential format profile as defined for OpenID4VCI.
 3. Support sender-constrained tokens, for example, using DPoP or mutual TLS.
 4. Support PKCE with the `S256` code challenge method for all authorisation requests.
-5. Support Wallet-initiated and Issuer-initiated issuance.
-6. Use the WUA (WIA and KA) as defined in CS-04 [7]; CS-04 is authoritative for WUA structure, validity, revocation and binding, and this specification references it rather than restating those rules.
+5. Use the WUA (WIA and KA) as defined in CS-04 [7]; CS-04 is authoritative for WUA structure, validity, revocation and binding, and this specification references it rather than restating those rules.
+
+WUs **MUST** additionally:
+
+1. Support the Pre-Authorised Code Flow (grant type `urn:ietf:params:oauth:grant-type:pre-authorized_code`) for Issuer-initiated issuance, since a Wallet Unit does not control which grant type an Issuer offers.
+
+Issuers **MAY**:
+
+1. Support the Pre-Authorised Code Flow for Issuer-initiated issuance where the use case calls for it (NOTE **CS01_02**). Issuers that do so MUST meet the additional requirements in sections 7.2, 7.4 and 7.7.
 
 ## 7.2 Credential Offer
 
 Issuers **MUST**:
 
 1. Support the grant type `authorization_code` in Credential Offers, aligned with OpenID4VCI.
-2. Include a `scope` value for each offered credential type so that the Wallet can identify the correct type and use the same value in the authorisation request.
+2. Include `credential_configuration_ids` in every Credential Offer, each value matching a key in `credential_configurations_supported` in the Credential Issuer metadata (section 7.7). Credential Offers do not carry `scope` values in either grant type; the Wallet resolves the `scope` for the Authorisation Code Flow from Issuer metadata (OpenID4VCI [1], sections 4.1.1 and 5.1.2).
 3. Support both same-device and cross-device sending of Credential Offers.
 4. Support at least the `openid-credential-offer://` custom URL scheme for Wallet invocation.
+
+Issuers that support the Pre-Authorised Code Flow (section 7.1) **MUST** additionally:
+
+1. Support the grant type `urn:ietf:params:oauth:grant-type:pre-authorized_code` in Credential Offers, aligned with OpenID4VCI.
+2. Ensure that each `pre-authorized_code` is short-lived and single-use.
+3. Include a `tx_code` object in every Credential Offer that uses the `urn:ietf:params:oauth:grant-type:pre-authorized_code` grant type, as the replay mitigation required by OpenID4VCI [1] section 13.6.1 (NOTES **CS01_03** and **CS01_04**).
+4. Deliver the Transaction Code to the Holder via a channel separate from the Credential Offer, for example, by text message or email (OpenID4VCI [1], section 4.1.1).
 
 WUs **MUST**:
 
 1. Be able to parse a Credential Offer that uses `authorization_code` as the grant type.
-2. Use the `scope` value from the offer in the authorisation request.
+2. Resolve each `credential_configuration_ids` value against `credential_configurations_supported` in the Issuer metadata, and use the `scope` value from the resolved entry in the authorisation request.
 3. Support invocation via the `openid-credential-offer://` custom URL scheme.
+4. Be able to parse a Credential Offer that uses `urn:ietf:params:oauth:grant-type:pre-authorized_code` as the grant type, including the `tx_code` object and its `input_mode`, `length` and `description` parameters.
+5. Where the Credential Offer contains a `tx_code` object (including an empty one), prompt the Holder for the Transaction Code, supporting both the `numeric` (default) and `text` input modes, and send the entered value in the `tx_code` parameter of the Token Request.
+6. Where the `authorization_code` grant object in a Credential Offer contains an `issuer_state` value, include it unchanged as the `issuer_state` parameter of the subsequent authorisation request (OpenID4VCI [1], section 4.1.1).
+7. Process Credential Offers only from Credential Issuers that the WU trusts, terminating processing where the `credential_issuer` value is not trusted (OpenID4VCI [1], section 13.6.2, NOTE **CS01_05**).
+
+WUs **SHOULD**:
+
+1. Display the Credential Issuer endpoint to which a Transaction Code will be sent, and ask the Holder for confirmation, before submitting the Token Request (OpenID4VCI [1], section 13.6.2, NOTE **CS01_05**).
 
 ## 7.3 Authorisation Endpoint and PAR
+
+The requirements in this section apply to the Authorisation Code Flow only. The Pre-Authorised Code Flow does not use the Authorisation Endpoint or PAR; its Token Endpoint requirements are given in section 7.4.
 
 Issuers **MUST**:
 
@@ -396,7 +450,26 @@ Issuers **SHOULD**:
 
 1. Support refresh tokens for credential refresh, following OpenID4VCI guidance on refresh usage and lifetime. Where re-issuance is supported, sender-constrained refresh tokens are REQUIRED and are specified normatively in section 7.8.
 
-> Note: because the WIA `cnf` key is used as the DPoP key (WUs item 3 above), for WUA-based issuance the Access Token is DPoP-bound (section 7.1).
+> [!NOTE]
+> Because the WIA `cnf` key is used as the DPoP key (WUs item 3 above), for WUA-based issuance the Access Token is DPoP-bound (section 7.1).
+
+In the Pre-Authorised Code Flow, WUs **MUST** additionally:
+
+1. Authenticate at the Token Endpoint using the WIA and its Proof-of-Possession as specified in items 1 and 2 above; since this flow has no PAR step, both are sent with the Token Request only. OpenID4VCI [1] makes client authentication OPTIONAL for the `urn:ietf:params:oauth:grant-type:pre-authorized_code` grant type; this profile REQUIRES it.
+2. Include the `pre-authorized_code` from the Credential Offer in the Token Request, together with the Transaction Code entered by the Holder in the `tx_code` parameter (section 7.2).
+3. Use the WIA `cnf` key as the DPoP key when requesting the Access Token, as in item 3 above. Because this flow has no PAR step (and hence no `dpop_jkt` code binding, section 7.3), the DPoP binding is established at the Token Request.
+
+In the Pre-Authorised Code Flow, Issuers **MUST** additionally:
+
+1. Reject Token Requests that use the `urn:ietf:params:oauth:grant-type:pre-authorized_code` grant type without client authentication with a valid WIA. Anonymous access (`pre-authorized_grant_anonymous_access_supported`) MUST NOT be offered.
+2. Verify that the `pre-authorized_code` was issued by their AS, has not expired and has not been used before, returning the `invalid_grant` error otherwise (OpenID4VCI [1], Token Error Response).
+3. Verify the Transaction Code value presented in the `tx_code` parameter, returning `invalid_grant` if the value is wrong, and `invalid_request` if a Transaction Code is provided but not expected, or expected but not provided.
+4. Limit the number of failed Transaction Code attempts for a given `pre-authorized_code` and invalidate that code once the limit is exceeded (OpenID4VCI [1], section 13.6.1).
+
+In the Pre-Authorised Code Flow, Issuers **SHOULD**:
+
+1. Issue Access Tokens that are valid only for the credential(s) indicated in the corresponding Credential Offer.
+2. Treat Transaction Codes as short-lived and single-use.
 
 ## 7.5 Credential Endpoint
 
@@ -450,13 +523,14 @@ Issuers **MUST** publish metadata that includes:
 
 1. OAuth 2.0 and OpenID configuration, including Authorisation, Token and PAR endpoints.
 2. Credential Issuer metadata that describes:
-    * all supported credential types
-    * a mapping from each credential type to a unique `scope` value
+    * all supported credential types, as entries in `credential_configurations_supported`
+    * for each entry, the `scope` value that the Wallet uses in authorisation requests
+3. `grant_types_supported` in the Authorisation Server metadata, listing `authorization_code` and, where the Issuer supports the Pre-Authorised Code Flow (section 7.1), `urn:ietf:params:oauth:grant-type:pre-authorized_code`; when this parameter is published it replaces the default values defined for OAuth Authorisation Server Metadata, so every supported grant type MUST be listed. The `pre-authorized_grant_anonymous_access_supported` parameter MUST NOT be set to `true`, since client authentication with the WIA is required (section 7.4).
 
 Wallets **MUST**:
 
-1. Retrieve and process Issuer metadata, including the mapping from credential type to `scope`.
-2. Use this mapping when constructing authorisation requests and when interpreting Credential Offers.
+1. Retrieve and process Issuer metadata, including `credential_configurations_supported` and the `scope` value of each entry.
+2. Resolve the `credential_configuration_ids` values of a Credential Offer against that metadata, and use the resolved `scope` values when constructing authorisation requests.
 
 Issuers **MAY**:
 
@@ -507,10 +581,28 @@ The concrete parameters and encoding follow HAIP and OpenID4VCI guidance on Cred
 The **Credential Offer object** MUST contain at least:
 
 * `credential_issuer`: base URL identifying the Issuer
-* `grants`: object that includes support for `authorization_code`
-* For each credential type:
-    * a credential type identifier
-    * the associated `scope` value
+* `credential_configuration_ids`: non-empty array of strings, each matching a key in `credential_configurations_supported` in the Credential Issuer metadata (section 7.7)
+* `grants`: object that includes `authorization_code`, `urn:ietf:params:oauth:grant-type:pre-authorized_code`, or both
+
+When the `grants` object contains the `authorization_code` grant type, that grant object MAY contain:
+
+* `issuer_state`: an opaque string created by the Issuer that binds the subsequent authorisation request to the context of this offer.
+* `authorization_server`: identifies the Authorisation Server to use with this grant type. It MUST be used when the `authorization_servers` parameter in the Credential Issuer metadata has multiple entries, and MUST NOT be used otherwise.
+
+When the `grants` object contains the `urn:ietf:params:oauth:grant-type:pre-authorized_code` grant type, that grant object MUST contain:
+
+* `pre-authorized_code`: short-lived, single-use code to be sent in the subsequent Token Request
+* `tx_code`: object indicating that a Transaction Code is required, REQUIRED by this profile as replay mitigation (sections 7.2 and 7.4, NOTES **CS01_03** and **CS01_04**), with the OPTIONAL parameters:
+    * `input_mode`: `numeric` (default) or `text`
+    * `length`: length of the Transaction Code
+    * `description`: guidance for the Holder on how to obtain the Transaction Code (maximum 300 characters)
+
+and MAY contain:
+
+* `authorization_server`: as defined for the `authorization_code` grant object above.
+
+> [!NOTE]
+> Credential Offers do not carry `scope` values, in either grant type. The Wallet resolves the `scope` required for the Authorisation Code Flow by looking up each `credential_configuration_ids` value in `credential_configurations_supported` in the Credential Issuer metadata (OpenID4VCI [1], sections 4.1.1 and 5.1.2).
 
 The exact JSON structure MUST comply with OpenID4VCI Credential Offer definitions.
 
@@ -528,6 +620,7 @@ The exact JSON structure MUST comply with OpenID4VCI Credential Offer definition
 * `redirect_uri`
 * `response_type=code`
 * `state`, `nonce`
+* `issuer_state`, when provided in the `authorization_code` grant object of a Credential Offer (section 8.2)
 
 **Response**
 
@@ -542,12 +635,19 @@ All PAR requests MUST be client-authenticated according to Section 7.4.
 * **Direction**: WU to Issuer (AS)
 * **Method**: `POST`
 
-**Request (logical fields)**
+**Request (logical fields — Authorisation Code grant)**
 
 * `grant_type=authorization_code`
 * `code`
 * `redirect_uri`
 * `code_verifier`
+* client authentication using Wallet attestation JWT, for example, `client_assertion` and `client_assertion_type`
+
+**Request (logical fields — Pre-Authorised Code grant)**
+
+* `grant_type=urn:ietf:params:oauth:grant-type:pre-authorized_code`
+* `pre-authorized_code`
+* `tx_code`: the Transaction Code value entered by the Holder; present if and only if the Credential Offer contained a `tx_code` object (section 7.2)
 * client authentication using Wallet attestation JWT, for example, `client_assertion` and `client_assertion_type`
 
 **Response**
@@ -575,9 +675,13 @@ For re-issuance (section 6.4), the Token Endpoint also supports the `refresh_tok
 * `expires_in`
 * `refresh_token` (rotated for the next re-issuance)
 
-**Error handling**
+**Error Respond**
 
-* On `invalid_grant` (for example, an expired, revoked or unknown refresh token), the WU MUST fall back to the full Authorisation Code Flow with PAR (section 6.1) or a new Credential Offer (section 6.2).
+In line with the OpenID4VCI [1] Token Error Response, the AS returns:
+
+* `invalid_grant` (for example, an expired, revoked or unknown refresh token), the WU MUST fall back to the full Authorisation Code Flow with PAR (section 6.1) or a new Credential Offer (section 6.2). The `pre-authorized_code` is invalid, expired or already used, or the Transaction Code value is wrong
+* `invalid_request`: a Transaction Code was provided but not expected, or expected but not provided
+* `invalid_client`: the Token Request lacks the client authentication required by this profile
 
 ## 8.5 Credential Endpoint
 
