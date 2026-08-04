@@ -92,19 +92,6 @@ Each exchange that requires legal-grade assurance produces qualified evidence of
 
 **_WE BUILD implementation note:_** _the WP4 QTSP group will explore delivering an interoperable pre-production QERDS, along with CIR (EU) 2025/1944 requirements, as a service to the WP4 Wallet Providers group, working with the WP4 Architecture group on cross-cutting concerns, such as interoperability specifications. This enables wallet providers to provide a business wallet to the use cases with a digital address and access to the designated QERDS. For reference, see the [QERDS documentation](#qerds-documentation)._
 
-##### When does QERDS apply
-
-QERDS is the mandatory secure legal communication channel for the European Business Wallet, although not every wallet interaction requires it. Immutable business documents should not be transferred as attestations but via QERDS (see [ADR: EAA for verifiable claims, (Q)ERDS for data transfer](https://github.com/webuild-consortium/wp4-architecture/blob/main/adr/adr-qeaa-attestations-qerds-documents.md)).
-
-The table below clarifies when implementations should use QERDS and when other wallet mechanisms, such as credential issuance and presentation (OpenID4VCI / OpenID4VP), are sufficient.
-
-| QERDS applies when | QERDS does *not* apply when |
-| --- | --- |
-| Business documents and legal notifications must be exchanged with delivery evidence. | The scenario is mainly an issuance or verification flow following an issuer–holder–verifier model (for example PID or QEAA presentation). |
-| A signed evidence trail of submission, relay, delivery, retrieval, or acceptance is needed. | The flow only involves attestation of attributes, without document exchange semantics. |
-| The flow is wallet-centric or system-to-system and requires automation or agent-based access. | The use case does not require registered-delivery evidence. |
-
-
 ##### High-level architecture
 
 WE BUILD follows the [ETSI EN 319 522](https://www.etsi.org/deliver/etsi_en/319500_319599/31952201/01.02.01_60/en_31952201v010201p.pdf) four-corner model: each business wallet connects only to its own QERDS provider. Providers relay messages and evidences when both the sender and the recipient use different QTSP. The recipient's digital address and QERDS capabilities discovery uses common directory services.
@@ -139,6 +126,8 @@ flowchart LR
 ````
 
 Wallet Messaging Protocol (WMP) is the optional API access protocol between a business wallet and its QERDS provider, as decided in [ADR: Deliver business wallet data using QERDS](https://github.com/webuild-consortium/wp4-architecture/blob/main/adr/build-qerds.md) and proposed in [Pull Request #184 - QERDS EBW–QTSP Interface](https://github.com/webuild-consortium/wp4-architecture/pull/184). WMP is a JSON-RPC 2.0 messaging protocol with a mandatory MLS encryption layer for QERDS subscriber content and an evidence profile aligned with ETSI EN 319 522 registered-delivery requirements. See [Wallet Messaging Protocol](https://wmp.name) for additional information.
+
+> Note: This blueprint uses WMP as the protocol selected within WE BUILD for piloting and testing the EBW-QERDS interface, in anticipation of the Commission Implementing Regulation. Please note that WMP is not a formally standardised protocol and should not be interpreted as such.
 
 ##### WE BUILD Conformance Specifications mapping
 
