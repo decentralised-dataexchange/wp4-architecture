@@ -51,6 +51,8 @@ def generate_qmd(md: str, numbered: bool) -> str:
         for line in lines:
             # Fix Mermaid syntax for Quarto
             line = line.replace('```mermaid', '```{mermaid}')
+            # Fix links to conformance specifications in the published page
+            line = line.replace('](../conformance-specs/', '](')
             qmd_file.write(line)
     return qmd
 
