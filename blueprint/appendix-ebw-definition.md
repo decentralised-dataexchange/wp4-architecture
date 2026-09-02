@@ -208,7 +208,7 @@ Additional points from the draft Regulation:
 - **Linked (chained) attestations**: an attestation can be cryptographically linked to others so that each attestation, and the chain as a whole, can be verified for authenticity and integrity. This supports submitting an attestation once and reusing a verifiable reference (for example a hash of a sealed attestation) across procedures.
 - **Typical business attributes** expected in the ecosystem include current address, VAT registration number, tax reference number, Legal Entity Identifier (LEI), EORI number and excise number.
 
-**_WE BUILD implementation note:_** _The WP4 Wallet Providers provide, as part of their business wallet solutions, a subset of the functionalities required by the use cases. For the functionalities that require qualified trust services, such as the issuance of qualified certificates or the sealing of documents with qualified electronic seals, the WP4 QTSP group provides these services within WE BUILD. For reference, see the [QTSP documentation](#appendix-f-qtsp-documentation)._
+**_WE BUILD implementation note:_** _The WP4 Wallet Providers provide, as part of their business wallet solutions, a subset of the functionalities required by the use cases. For the functionalities that require qualified trust services, such as the issuance of qualified certificates or the sealing of documents with qualified electronic seals, the WP4 QTSP group provides these services within WE BUILD. For reference, see the [QTSP documentation](appendix-qtsp.md).
 
 ### Secure communication channel
 
