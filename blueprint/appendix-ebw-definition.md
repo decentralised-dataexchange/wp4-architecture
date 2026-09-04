@@ -226,7 +226,54 @@ Two standalone service obligations widen access to the channel:
 - Providers must offer the QERDS as a **standalone service to self-employed persons and sole traders** using their EUDI Wallets in a business capacity.
 - Providers must offer, as a standalone service, a **unique digital address to public sector bodies that do not own an EBW**, so those bodies can be listed in the Directory and reached over the channel.
 
+Each exchange that requires legal-grade assurance produces qualified evidence of submission, relay, delivery, retrieval, and acceptance. Wallets remain the user-facing endpoints where authorised representatives and connected business applications read, approve, and manage messages; QERDS providers operate the delivery layer underneath, handling routing, inter-provider relay, and evidence creation. For the full technical flow and use-case scenarios, see the [Blueprint integration model — Secure Communication Channel](#04-integration-model) and the [QERDS documentation](#qerds-documentation).
+
 **_WE BUILD implementation note:_** _the WP4 QTSP group will explore delivering an interoperable pre-production QERDS, along with CIR (EU) 2025/1944 requirements, as a service to the WP4 Wallet Providers group, working with the WP4 Architecture group on cross-cutting concerns, such as interoperability specifications. This enables wallet providers to provide a business wallet to the use cases with a digital address and access to the designated QERDS. For reference, see the [QERDS documentation](#qerds-documentation)._
+
+##### High-level architecture
+
+WE BUILD follows the [ETSI EN 319 522](https://www.etsi.org/deliver/etsi_en/319500_319599/31952201/01.02.01_60/en_31952201v010201p.pdf) four-corner model: each business wallet connects only to its own QERDS provider. Providers relay messages and evidences when both the sender and the recipient use different QTSP. The recipient's digital address and QERDS capabilities discovery uses common directory services.
+
+````mermaid
+flowchart LR
+    RP(Relying Party) -->|Validates delivery|QP[QERDS Provider]
+    QP -->|Provides the QERDS|BWU[Business Wallet Unit]
+    BA(Business Application) -->|Uses API|BWU
+    U(User) -->|Uses UI|BWU
+    BWU -->|Discovers services and capabilities|DD[Digital Directory]
+    BWU -.->|Shares data|Q1
+    subgraph QERDS 4-corner secure channel
+        Q1[QTSP 1] -.-> Q2[QTSP 2]
+    end
+    Q2 -.-> BWU2[Business Wallet Unit]
+````
+
+Data transmission, sending data and receiving data reference scenarios are described in [QERDS between wallets](https://github.com/webuild-consortium/wp4-qtsp-group/blob/main/docs/qerds/between-wallets.feature.md), which can be complemented with the corresponding sequence diagrams from [QERDS architecture overview](https://github.com/webuild-consortium/wp4-qtsp-group/blob/main/docs/qerds/architecture.md).
+
+Per [ADR: Separate the QERDS agent, log and relay](https://github.com/webuild-consortium/wp4-architecture/blob/main/adr/qerds-registry-relay.md), WE BUILD treats delivery agent (submission, reception, identity verification), delivery log (evidence retention), and delivery relay (inter-provider transport) as orthogonal concerns, as proposed in [ETSI TR 119 520-1](https://www.etsi.org/deliver/etsi_tr/119500_119599/11952001/01.01.01_60/tr_11952001v010101p.pdf). End-to-end confidentiality of user content is enforced at the delivery agent layer; inter-provider relay protects relay metadata and provider authentication.
+
+##### Communication protocol: WMP
+
+The secure communication channel uses two complementary protocol layers. A business wallet does not exchange messages directly with another wallet or with a foreign trust service provider. Instead, each wallet interacts only with its own QERDS provider, delegating routing, evidence management, and inter-provider relay.
+
+````mermaid
+flowchart LR
+    B1(Sender Business Wallet) -->|WMP|Q1["Sender QERDS\n(QTSP 1)"]
+    Q1 -->|AS4| Q2["Recipient QERDS\n(QTSP 2)"]
+    Q2 -->|WMP| B2(Recipient Business Wallet)
+````
+
+Wallet Messaging Protocol (WMP) is the optional API access protocol between a business wallet and its QERDS provider, as decided in [ADR: Deliver business wallet data using QERDS](https://github.com/webuild-consortium/wp4-architecture/blob/main/adr/build-qerds.md) and proposed in [Pull Request #184 - QERDS EBW–QTSP Interface](https://github.com/webuild-consortium/wp4-architecture/pull/184). WMP is a JSON-RPC 2.0 messaging protocol with a mandatory MLS encryption layer for QERDS subscriber content and an evidence profile aligned with ETSI EN 319 522 registered-delivery requirements. See [Wallet Messaging Protocol](https://wmp.name) for additional information.
+
+> Note: This blueprint uses WMP as the protocol selected within WE BUILD for piloting and testing the EBW-QERDS interface, in anticipation of the Commission Implementing Regulation. Please note that WMP is not a formally standardised protocol and should not be interpreted as such.
+
+##### WE BUILD Conformance Specifications mapping
+
+| Topic | WBCS | Architecture interface |
+| --- | --- | --- |
+| EBW-QERDS API and protocol | [(PR #184) CS-005: EBW–QTSP WMP Interface](https://github.com/webuild-consortium/wp4-architecture/pull/184) | Data transmission; evidence transmission; notification creation; data submission |
+| Inter-QTSP message relay | [(PR #261) CS-007: QeRDS Four-Corner AS4](https://github.com/webuild-consortium/wp4-architecture/pull/261) | Message relay |
+| Credential presentation at QERDS onboarding | [CS-002: Credential Presentation](https://github.com/webuild-consortium/wp4-architecture/blob/main/conformance-specs/cs-02-credential-presentation.md) | Identity verification |
 
 ### European Digital Directory
 
