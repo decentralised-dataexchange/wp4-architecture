@@ -28,12 +28,16 @@ Propose new ADRs using the [template](_template.md). Announce them to the [Archi
 19. [Credential Offer Endpoint Registry and Lookup Service](ebw-endpoint-lookup-service.md)
 20. [Business Wallet Unit Attestation based on TS3](bwua-ts3-attestation.md)
 21. [Pre-flight CS](pre-flight-CS.md)
+22. [Pseudonyms for User Accounts](ar-pseudonyms.md)
+23. [Architectural Scoping of the European Business Wallet](ebw-scope.md)
 <!--END INDEX-->
 
 ## Supporting analysis
 
+<!--BEGIN INDEX-->
 - [Attestations, Documents and Data Analysis](build-document-vs-attestation-analysis.md)
 - [EDD Identification, Discovery and Connection Analysis](build-edd-identification-discovery-connection-analysis.md)
+<!--END INDEX-->
 
 ## ADR process for WE BUILD
 

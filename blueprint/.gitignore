@@ -1,5 +1,6 @@
 *~
 *.html
+appendix-adr.md
 cs-*.md
 cs-*.qmd
 quarto-*.deb
