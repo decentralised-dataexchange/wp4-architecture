@@ -275,7 +275,13 @@ Wallet Messaging Protocol (WMP) is the optional API access protocol between a bu
 | Inter-QTSP message relay | [(PR #261) CS-007: QeRDS Four-Corner AS4](https://github.com/webuild-consortium/wp4-architecture/pull/261) | Message relay |
 | Credential presentation at QERDS onboarding | [CS-002: Credential Presentation](https://github.com/webuild-consortium/wp4-architecture/blob/main/conformance-specs/cs-02-credential-presentation.md) | Identity verification |
 
-#### Access control mechanism
+### European Digital Directory
+
+The Commission establishes, operates and maintains a **European Digital Directory** as the trusted source of information for EBW owners. It takes the form of a web application with two interfaces: a machine-readable API for system-to-system communication, and a secure web portal for authenticated and authorised wallet users.
+
+For each owner, providers submit at least: the official name (as in the national register of the country of establishment or habitual residence), the unique identifier, the digital address(es), and the country of establishment. Public sector bodies that are not EBW owners are also listed, with the same categories of information. Keeping the Directory accurate is a chain of duties: providers verify owner information at least **every 72 hours** (where applicable using mechanisms of the relevant authentic sources), and communicate changes to the Commission within **one working day** of receipt. These arrangements should not indirectly create a requirement for economic operators to update the information. Access to the Directory is limited to wallet owners, wallet users, providers and Member State authorities. The Directory relies on information made available by business registers (including through BRIS) without duplicating it, and must comply with data-protection principles such as data minimisation.
+
+### Access control mechanism
 
 To enable wallet owners, authorised representatives and other authorised users to access the business wallet while preventing unauthorised access, each business wallet implements role-based access control for the assets it protects, including digital documents and the secure communication channel. To identify, authenticate, and authorise wallet users, the access control mechanism relies on electronic identification means, such as digital identity wallets, and, potentially, on trust services for the electronic attestation of attributes. Access to a wallet unit is granted only after successful authentication with a notified eID means at assurance level "substantial" at least, or an alternative mechanism recognised as equivalent.
 
