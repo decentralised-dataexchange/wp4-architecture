@@ -279,7 +279,7 @@ At signing time, identifiers or references to both the PID and the EBWOID are in
 The exact representation of these bindings is use-case specific and will be defined in rulebooks and WBCS.
 
 #### Credential catalog and schema management
-To support a wide range of business use cases, the European Business Wallet must functionally maintain an internal credential catalog and schema management capability. This allows the wallet unit to dynamically discover, download, and resolve schemas for different electronic attestations of attributes (such as company certificates, tax registrations, or industry-specific permits). By managing these schemas internally, the wallet can properly validate the integrity of incoming credentials, correctly map data fields to shared semantic vocabularies, and render them in a user-friendly way for administrators.
+To support a wide range of business use cases, the European Business Wallet must functionally maintain an internal credential catalog and schema management capability. This allows the wallet unit to dynamically discover, download, and resolve schemas for different electronic attestations of attributes (such as company certificates, tax registrations, or industry-specific permits). By managing these schemas using TS11 APIs, the wallet can properly validate the integrity of incoming credentials, correctly map data fields to shared semantic vocabularies, and render them in a user-friendly way for administrators.
 
 # Ecosystem and governance
 
