@@ -1,7 +1,7 @@
 # WE BUILD - Pre-flight Conformance Specification CS-018: Baseline Trust Validation
 
 Version 0.1 / Pre-flight Draft
-Date: 16 October 2026
+Date: 23 October 2026
 
 **Authors / Contributors**: WP4 Architecture / Trust Infrastructure Group
 
@@ -71,8 +71,8 @@ This specification defines the conformance expectations for trust validation by 
   * Retrieval, authentication, freshness and caching of the WE BUILD List of Trusted Lists (LoTL) and of the Lists of Trusted Entities (LoTE, ETSI TS 119 602 [23]) and Trusted Lists (TL, ETSI TS 119 612 [24]) it points to
   * X.509 certificate path validation to a trust anchor taken from a list, including revocation checking of the certificates in the path
   * Validation of the WRPAC by the Wallet Unit, at presentation (CS-002 [2], CS-007 [5]) and at issuance (CS-001 [1])
-  * Validation of the WRPRC by the Wallet Unit, including the binding to the WRPAC and the check for overasking
-  * Validation of the signing certificate of PID, QEAA, PuB-EAA and EAA Providers by the Relying Party and the Wallet Unit, for SD-JWT VC and ISO/IEC 18013-5 mdoc
+  * Validation of the WRPRC by the Wallet Unit where a WRPRC is present (optional\*, see §7.3), including the binding to the WRPAC and the check for overasking
+  * Validation of the signing certificate of PID, QEAA and PuB-EAA Providers, and of non-qualified EAA Providers against the trust anchors that the Rulebook defines, by the Relying Party and the Wallet Unit, for SD-JWT VC and ISO/IEC 18013-5 mdoc
   * Validation of the signer of a Status List Token, for attestations, WRPRCs and Wallet Unit Attestations
   * Validation of the Wallet Provider signing certificate of a WIA or KA by the Credential Issuer
   * The result of each failed or incomplete check (reject, warn the User, or proceed)
@@ -83,6 +83,7 @@ This specification defines the conformance expectations for trust validation by 
   * WIA and KA content and lifecycle, covered by CS-004 [3] and CS-005 [4]
   * The intermediary association in the WRPAC and WRPRC, covered by CS-013 [37]; this specification covers only the direct case
   * Operation of the LoTL and of the lists by the Trust Group (onboarding, signing, publication) [11], [13]
+  * Distribution of the trust anchors of non-qualified EAA Providers, which the Rulebook of each credential type defines ([14] OIA_15), see §9
   * Trust models other than X.509 with lists, such as OpenID Federation trust marks and the EAA Provider chaining models (see §9)
   * Validation at a past point in time (long-term validation), see §9
   * Validation of qualified electronic signatures and seals created with a Wallet Unit, covered by CS-003
@@ -140,17 +141,19 @@ flowchart TB
     LOTL --> RC["WRPRC Provider LoTE"]
     LOTL --> PUB["PuB-EAA Provider LoTE"]
     LOTL --> QTL["QEAA Trusted List (TS 119 612)"]
-    LOTL --> ETL["EAA Trusted List (TS 119 612)"]
     PID --> PIDC["PID signing certificates<br/>PID Status List Tokens"]
     WP --> WPC["WIA / KA signing certificates<br/>WUA Status List Tokens"]
     AC --> ACC["WRPACs of Relying Parties<br/>and Credential Issuers"]
     RC --> RCC["WRPRCs<br/>WRPRC Status List Tokens"]
     PUB --> PUBC["PuB-EAA signing certificates"]
     QTL --> QC["QEAA signing certificates"]
-    ETL --> EC["EAA signing certificates"]
+    RB["Rulebook of the credential type<br/>(outside the LoTL)"]
+    RB -.-> NEC["Non-qualified EAA signing certificates"]
 ```
 
-In the European Union deployment, Member States notify the trusted entities to the Commission [34], and the Commission publishes the LoTE locations and their signing certificates in the Official Journal [14] TLPub_01, TLPub_07. In WE BUILD, the WP4 Trust Group publishes the LoTL in the trust group repository and onboards each Trusted List Provider [11], [13]. A Validator that is configured with the WE BUILD LoTL MUST NOT be configured to accept trust anchors from other sources for the checks in this specification (see LST-TV-01).
+In the European Union deployment, Member States notify the trusted entities to the Commission [34], and the Commission publishes the LoTE locations and their signing certificates in the Official Journal [14] TLPub_01, TLPub_07. In WE BUILD, the WP4 Trust Group publishes the LoTL in the trust group repository and onboards each Trusted List Provider [11], [13]. A Validator that is configured with the WE BUILD LoTL MUST NOT be configured to accept trust anchors from other sources for the checks in this specification, except the trust anchors of non-qualified EAA Providers (see LST-TV-01).
+
+WE BUILD has no trusted list for non-qualified EAA Providers. This follows the ARF, which uses Trusted Lists for QEAA Providers, and LoTEs for PID Providers, PuB-EAA Providers, Access Certificate Authorities and Providers of registration certificates ([14] OIA_15b, ISSU_10b). The trust anchors of a non-qualified EAA come from the mechanism in the Rulebook of its credential type ([14] OIA_15). A Wallet Unit validates a non-qualified EAA only where it has those trust anchors ([14] ISSU_10).
 
 ## 5.2 What Is Validated Against Which List
 
@@ -158,13 +161,13 @@ In the European Union deployment, Member States notify the trusted entities to t
 |--------|--------------|-------------------|--------------|--------------------------|
 | WRPAC of a Relying Party | WU | WRPAC Provider LoTE | `WRPAC/Issuance` | CRL or OCSP |
 | WRPAC of a Credential Issuer (signed Credential Issuer metadata) | WU | WRPAC Provider LoTE | `WRPAC/Issuance` | CRL or OCSP |
-| WRPRC | WU | WRPRC Provider LoTE | `WRPRC/Issuance` | Token Status List |
+| WRPRC | WU, where present (optional\*) | WRPRC Provider LoTE | `WRPRC/Issuance` | Token Status List |
 | PID and EBWOID issued as PID | RP, WU | PID Provider LoTE | `PID/Issuance` | Token Status List |
 | QEAA | RP, WU | QEAA Trusted List | `Svctype/EAA/Q` | Token Status List |
 | PuB-EAA | RP, WU | PuB-EAA Provider LoTE | `PubEAA/Issuance` | Token Status List |
-| Non-qualified EAA | RP, WU | EAA Trusted List | `Svctype/EAA` | Token Status List, where the Rulebook requires it (CS-010 [6]) |
+| Non-qualified EAA | RP; WU where it has the trust anchors | The mechanism in the Rulebook of the credential type ([14] OIA_15) | as defined by the Rulebook | Token Status List, where the Rulebook requires it (CS-010 [6]) |
 | WIA, KA | Credential Issuer | Wallet Provider LoTE | `WalletSolution/Issuance` | Token Status List (CS-004 [3]) |
-| Status List Token | RP, WU, Credential Issuer | The list of the Referenced Token signer (§7.6) | as for the Referenced Token, or the matching `.../Revocation` service | not applicable |
+| Status List Token | RP, WU, Credential Issuer | As for the Referenced Token signer (§7.6) | as for the Referenced Token, or the matching `.../Revocation` service | not applicable |
 
 The full service type URIs are in §8.2.
 
@@ -199,39 +202,42 @@ sequenceDiagram
     WU->>WU: Build the path from the WRPAC to a WRPAC Provider LoTE trust anchor
     WU->>AC: Get CRL (cached) or OCSP response
     WU->>WU: Check the SCT in the WRPAC (where CT logs are available)
-    WU->>WU: Validate the WRPRC signature, path to WRPRC Provider LoTE
-    WU->>SP: Get the WRPRC Status List Token (cached)
-    WU->>WU: Check the WRPRC to WRPAC binding and the requested claims
+    opt WRPRC present (optional*)
+        WU->>WU: Validate the WRPRC signature, path to WRPRC Provider LoTE
+        WU->>SP: Get the WRPRC Status List Token (cached)
+        WU->>WU: Check the WRPRC to WRPAC binding and the requested claims
+    end
     WU->>WU: Show the RP and Service trade names, warnings if any
 ```
 
 1. The Relying Party sends a signed Request Object as defined in CS-002 [2] or CS-007 [5]. The `x5c` header carries the WRPAC and the intermediate certificates, but not the trust anchor.
 2. The Wallet Unit checks that the `client_id` is the `x509_hash` of the WRPAC and validates the Request Object signature with the WRPAC public key.
 3. The Wallet Unit validates the WRPAC path to a trust anchor of the WRPAC Provider LoTE, checks its revocation status and, where Certificate Transparency logs are available, its Signed Certificate Timestamp.
-4. The Wallet Unit validates the WRPRC from `verifier_info`: its signature and path to a trust anchor of the WRPRC Provider LoTE, its validity period, its revocation status and its binding to the WRPAC.
-5. The Wallet Unit compares the requested credentials and claims with the WRPRC.
+4. Where `verifier_info` contains a WRPRC (optional\*), the Wallet Unit validates it: its signature and path to a trust anchor of the WRPRC Provider LoTE, its validity period, its revocation status and its binding to the WRPAC.
+5. Where a WRPRC is present, the Wallet Unit compares the requested credentials and claims with it.
 6. The Wallet Unit shows the trade names of the Relying Party and its Service, and any warning, before it asks the User to approve.
 
-**Outcome**: the User sees an authenticated Relying Party and is warned before sharing more than the Relying Party is registered to request.
+**Outcome**: the User sees an authenticated Relying Party and, where a WRPRC is present, is warned before sharing more than the Relying Party is registered to request.
 
 ## 6.3 Wallet Unit Authenticates the Credential Issuer
 
 Participating actors: Credential Issuer, Wallet Unit.
 
 1. The Wallet Unit obtains the Credential Issuer metadata as defined in CS-001 [1].
-2. Where the metadata is signed, the Wallet Unit validates the signature with the key of the Credential Issuer's WRPAC, and validates the WRPAC as in §6.2 step 3 ([14] ISSU_24, ISSU_34).
-3. Where the metadata contains a WRPRC in `issuer_info`, the Wallet Unit validates it as in §6.2 step 4, and checks that the WRPRC entitles the Credential Issuer to issue the offered credential type ([14] ISSU_24a, ISSU_34a; [31] clause 4.2.3).
-4. After issuance, the Wallet Unit validates the received credential as in §6.4 before it stores it.
+2. The Wallet Unit validates the signature of the metadata with the key of the Credential Issuer's WRPAC, and validates the WRPAC as in §6.2 step 3 ([14] ISSU_24, ISSU_34). Metadata that is not signed fails this step.
+3. Where `issuer_info` in the metadata contains a WRPRC (optional\*), the Wallet Unit validates it as in §6.2 step 4, and checks that the WRPRC entitles the Credential Issuer to issue the offered credential type ([14] ISSU_24a, ISSU_34a, RPRC_22a, RPRC_23; [31] clause 4.2.3). Metadata without a WRPRC does not fail this step.
+4. If step 2 or step 3 fails, the Wallet Unit informs the User and does not request issuance (UP-TV-11, UP-TV-17).
+5. After issuance, the Wallet Unit validates the received credential as in §6.4 before it stores it. For a non-qualified EAA, it does this only where it has the trust anchors (WU-TV-17).
 
-**Outcome**: the Wallet Unit starts issuance only with a Credential Issuer that it has authenticated and that is registered to issue the requested credential type. It stores a credential only after it has validated it in the same way as a Relying Party will, so that the User does not keep a credential that verifiers will reject.
+**Outcome**: the Wallet Unit starts issuance only with a Credential Issuer that it has authenticated and, where a WRPRC is present, that is registered to issue the requested credential type. It stores a credential only after it has validated it in the same way as a Relying Party will, so that the User does not keep a credential that verifiers will reject.
 
 ## 6.4 Relying Party Validates a Presented Attestation
 
 Participating actors: Wallet Unit, Relying Party, Status Provider.
 
 1. The Relying Party receives the presentation as defined in CS-002 [2] or CS-007 [5].
-2. The Relying Party determines the expected Provider category (PID, QEAA, PuB-EAA or EAA) from the credential type and its Rulebook.
-3. The Relying Party takes the signing certificate from the `x5c` header (SD-JWT VC) or the `x5chain` header of `issuerAuth` (mdoc), validates the credential signature, and validates the path to a trust anchor of the list for that category (§5.2).
+2. The Relying Party determines the expected Provider category (PID, QEAA, PuB-EAA or non-qualified EAA) from the credential type and its Rulebook.
+3. The Relying Party takes the signing certificate from the `x5c` header (SD-JWT VC) or the `x5chain` header of `issuerAuth` (mdoc), validates the credential signature, and validates the path to a trust anchor for that category (§5.2). For a non-qualified EAA, the trust anchors come from the Rulebook of the credential type.
 4. The Relying Party checks the certificate content that identifies the category (§8.4).
 5. Where the credential has a `status` claim, the Relying Party obtains the Status List Token (CS-010 [6]) and validates its signer as defined in §7.6 before it reads the status.
 
@@ -255,14 +261,14 @@ These requirements apply to every Validator.
 
 | ID | Requirement | Reference |
 |----|-------------|-----------|
-| LST-TV-01 | The Validator MUST be configured with the location of the WE BUILD LoTL and with the LoTL signer certificate (§8.1), and MUST take every trust anchor for the checks in this specification from the lists that the LoTL points to, and only from those. | [14] RPA_04, RPRC_02a, ISSU_10b, OIA_15b; [25] GPR-4.0-02 |
+| LST-TV-01 | The Validator MUST be configured with the location of the WE BUILD LoTL and with the LoTL signer certificate (§8.1), and MUST take every trust anchor for the checks in this specification from the lists that the LoTL points to, and only from those, except the trust anchors of non-qualified EAA Providers (§5.2). | [14] RPA_04, RPRC_02a, ISSU_10b, OIA_15, OIA_15b; [25] GPR-4.0-02 |
 | LST-TV-02 | The Validator MUST validate the signature of the LoTL with the configured LoTL signer certificate: compact JAdES Baseline B for the JSON LoTL, enveloped XAdES Baseline B for the XML LoTL. The Validator MUST NOT use a LoTL whose signature does not validate. | [23] clause 6.8, [24] clause 5.7.1, [25] PRO-4.1.4-07 |
 | LST-TV-03 | The Validator MUST validate the signature of each trusted list with a certificate taken from the `ServiceDigitalIdentities` of the LoTL pointer to that list, and MUST NOT use a list whose signature does not validate. | [23] clause 6.3.13, [24] clause 5.3.13 |
 | LST-TV-04 | The Validator MUST check that the list type of each trusted list (`LoTEType` or `TSLType`) is the type given for that list in §8.2, and MUST use the service entries of a list only for the checks that §5.2 assigns to that list type. | [23] Annexes D to H, [24] clause 5.3.3 |
 | LST-TV-05 | The Validator MUST NOT use a LoTL or a trusted list whose `NextUpdate` is in the past. | [23] clause 6.3.15, [24] clause 5.3.15 |
 | LST-TV-06 | The Validator MUST NOT use a trusted list that contains a critical extension that the Validator does not process. | [23] clause 6.3.17 |
 | LST-TV-07 | The Validator SHOULD cache the LoTL and the trusted lists and MUST refresh them before `NextUpdate`. The Validator SHOULD refresh them at least once every 24 hours, and MUST NOT download a list for each transaction. | [14] ISSU_10a, OIA_15a |
-| LST-TV-08 | The Validator MUST derive trust anchors only from service entries that are current: for LoTE types without service status (PID, Wallet Provider, WRPAC Provider, WRPRC Provider), an entry that is present in the current list; for the PuB-EAA Provider LoTE, an entry with status `.../PubEAAProvidersList/SvcStatus/notified`; for a TL, an entry with status `http://uri.etsi.org/TrstSvc/TrustedList/Svcstatus/granted`, or `.../recognisedatnationallevel` for a non-qualified EAA service. | [14] GenNot_05, [23] Annexes D to H, [24] clause 5.5.4 |
+| LST-TV-08 | The Validator MUST derive trust anchors only from service entries that are current: for LoTE types without service status (PID, Wallet Provider, WRPAC Provider, WRPRC Provider), an entry that is present in the current list; for the PuB-EAA Provider LoTE, an entry with status `.../PubEAAProvidersList/SvcStatus/notified`; for a TL, an entry with status `http://uri.etsi.org/TrstSvc/TrustedList/Svcstatus/granted`. | [14] GenNot_05, [23] Annexes D to H, [24] clause 5.5.4 |
 | LST-TV-09 | The Validator MUST evaluate trust at the current time. The Validator MUST NOT use historical service information to accept a certificate whose service entry is no longer current. | [23] Annexes D to G, [24] clause 5.5.5 |
 
 ## 7.2 Certificate Path Validation
@@ -271,7 +277,7 @@ These requirements apply to every Validator, for every certificate path in this 
 
 | ID | Requirement | Reference |
 |----|-------------|-----------|
-| CRT-TV-01 | The Validator MUST build and validate a certification path, as defined in RFC 5280 [21], from the end-entity certificate to a trust anchor that LST-TV-08 gives for the service type in §5.2. The trust anchor is the certificate in the `ServiceDigitalIdentity`, or its public key with its subject name. | [21] clause 6, [25] PRO-4.3.4-03 |
+| CRT-TV-01 | The Validator MUST build and validate a certification path, as defined in RFC 5280 [21], from the end-entity certificate to a trust anchor that LST-TV-08 gives for the service type in §5.2, or, for a non-qualified EAA, to a trust anchor from the Rulebook of the credential type. The trust anchor is the certificate in the `ServiceDigitalIdentity`, or its public key with its subject name. | [21] clause 6, [25] PRO-4.3.4-03 |
 | CRT-TV-02 | The Validator MUST take the end-entity and intermediate certificates only from the `x5c` (JOSE) or `x5chain` (COSE) header of the signed object. Where that header also contains a self-signed certificate, the Validator MUST ignore it and MUST NOT use it as a trust anchor. | [16] clause 5.9.3, [17] clauses 4.1, 5, 6.1.1, [30] OIDFVP-HAIP-REDIRECTS_RO-02 |
 | CRT-TV-03 | The Validator MUST check that each certificate in the path is within its validity period at the time of validation. | [21] clause 6.1.3 |
 | CRT-TV-04 | The Validator MUST check the revocation status of each certificate in the path, except the trust anchor, by CRL [21] or OCSP [22], using the CRL distribution point or the OCSP location in the certificate. | [14] RPACANot_02, Reg_12, [26] CSS-6.6.2-01, CSS-6.6.3-01 |
@@ -280,6 +286,12 @@ These requirements apply to every Validator, for every certificate path in this 
 | CRT-TV-07 | The Validator MUST support ECDSA with P-256 and SHA-256 (ES256) for certificates and for signed objects. | [2], [12], [17] |
 
 ## 7.3 Wallet Unit Requirements
+
+> **\* Note on the optional WRPRC:** The Wallet Unit duty to authenticate and validate the WRPRC applies only from 11 August 2028 ([33] Article 3(4) and Article 8). The ARF defers RPRC_17 at presentation, and ISSU_24a, ISSU_34a, RPRC_22a and RPRC_23 at issuance, in the same way [14]. Until that date, where the WRPRC is marked optional\*:
+> * Where no WRPRC is present, the absence is not a failure.
+> * Where a WRPRC is present, the Wallet Unit MUST validate it as defined in WU-TV-08 to WU-TV-14 at presentation, or in WU-TV-16 at issuance, and MUST apply the results in §7.7.
+>
+> The WRPAC requirements (WU-TV-01 to WU-TV-07 and WU-TV-15) have no such delay and apply now.
 
 **Relying Party authentication at presentation**
 
@@ -293,25 +305,25 @@ These requirements apply to every Validator, for every certificate path in this 
 | WU-TV-06 | The Wallet Unit SHOULD check that the `certificatePolicies` extension of the WRPAC contains one of the policy identifiers of ETSI TS 119 411-8 (§8.4). | [26] clause 5.3, GEN-6.6.1-03 |
 | WU-TV-07 | Where Relying Party authentication succeeds, the Wallet Unit MUST show the User the trade name of the Relying Party and of its Service from the WRPAC. | [14] RPA_06, [33] Article 3(5) |
 
-**Registration certificate at presentation**
+**Registration certificate at presentation (optional\*)**
 
 | ID | Requirement | Reference |
 |----|-------------|-----------|
-| WU-TV-08 | The Wallet Unit MUST take the WRPRC from the `verifier_info` element with `format` `registration_cert` (OpenID4VP) or from `euWrprc` in `requestInfo` (mdoc), and MUST validate its signature with the first certificate in its `x5c` (JWT) or `x5chain` (CWT) header. | [16] clause 5.1, [28] clauses 5.2.2, 5.2.3, [30] OIDFVP-HAIP-COMMON-REQ-RO-13 to -16, [33] Annex II |
+| WU-TV-08 | Where a WRPRC is present, the Wallet Unit MUST take it from the `verifier_info` element with `format` `registration_cert` (OpenID4VP) or from `euWrprc` in `requestInfo` (mdoc), and MUST validate its signature with the first certificate in its `x5c` (JWT) or `x5chain` (CWT) header. | [16] clause 5.1, [28] clauses 5.2.2, 5.2.3, [30] OIDFVP-HAIP-COMMON-REQ-RO-13 to -16, [33] Annex II |
 | WU-TV-09 | The Wallet Unit MUST check that the WRPRC `typ` is `rc-wrp+jwt` or `rc-wrp+cwt`, and MUST validate the path of the WRPRC signing certificate as defined in §7.2 to a trust anchor of the WRPRC Provider LoTE, service type `WRPRC/Issuance`. | [14] RPRC_02, RPRC_02a, [28] GEN-5.2.1-03, -04 |
 | WU-TV-10 | The Wallet Unit MUST check that the WRPRC `policy_id` contains `0.4.0.19475.3.1`, that `iat` is not in the future and, where present, that `exp` is not in the past. | [28] OVR-6.1.3-01, GEN-5.2.4-08 |
 | WU-TV-11 | The Wallet Unit MUST check the revocation status of the WRPRC from its `status` claim as defined in CS-010 [6], and MUST validate the signer of the Status List Token as defined in §7.6. | [14] RPRC_17, [28] REV-6.2.6.2-05 |
-| WU-TV-12 | The Wallet Unit MUST check that the WRPRC `sub` is equal to the `organizationIdentifier` (legal person) or the `serialNumber` (natural person) of the WRPAC subject, and that the Service identifier of the WRPRC is equal to that of the WRPAC. | [14] RPRC_07, RPRC_17a, [28] GEN-5.1.1-02, GEN-5.1.1-03 |
-| WU-TV-13 | The Wallet Unit MUST check that each credential and each claim requested in the `dcql_query` (OpenID4VP) or in the `docRequests` (mdoc) is listed in the `credentials` of the WRPRC, with the same format, credential type and claim path. | [14] RPRC_21, [32] Article 8(2)(d), [33] Annex II WRP-OVERASKING-01 to -03 |
-| WU-TV-14 | The Wallet Unit MUST complete WU-TV-08 to WU-TV-13 before it asks the User to approve the presentation. | [33] Annex II WRP-VALIDATION-01 |
+| WU-TV-12 | Where a WRPRC is present, the Wallet Unit MUST check that its `sub` is equal to the `organizationIdentifier` (legal person) or the `serialNumber` (natural person) of the WRPAC subject, and that the Service identifier of the WRPRC is equal to that of the WRPAC. | [14] RPRC_07, RPRC_17a, [28] GEN-5.1.1-02, GEN-5.1.1-03 |
+| WU-TV-13 | Where a WRPRC is present, the Wallet Unit MUST check that each credential and each claim requested in the `dcql_query` (OpenID4VP) or in the `docRequests` (mdoc) is listed in the `credentials` of the WRPRC, with the same format, credential type and claim path. | [14] RPRC_21, [32] Article 8(2)(d), [33] Annex II WRP-OVERASKING-01 to -03 |
+| WU-TV-14 | Where a WRPRC is present, the Wallet Unit MUST complete WU-TV-08 to WU-TV-13 before it asks the User to approve the presentation. | [33] Annex II WRP-VALIDATION-01 |
 
 **Credential Issuer authentication at issuance**
 
 | ID | Requirement | Reference |
 |----|-------------|-----------|
-| WU-TV-15 | Where the Credential Issuer metadata is signed, the Wallet Unit MUST validate the signature with the first certificate in its `x5c` header and MUST validate that certificate as a WRPAC as defined in WU-TV-04 and WU-TV-05. | [14] ISSU_22, ISSU_24, ISSU_34, [17] clause 4.1, [31] ISS-MDATA-4.2.1-01 |
-| WU-TV-16 | Where the Credential Issuer metadata contains a WRPRC in `issuer_info`, the Wallet Unit MUST validate it as defined in WU-TV-09 to WU-TV-12, and MUST check that it contains `provides_attestations` and that `provides_attestations` contains the credential type that the Wallet Unit is about to request. | [14] ISSU_24a, ISSU_34a, RPRC_22a, RPRC_23, [31] ISS-MDATA-REG_CERT-4.2.3-04 |
-| WU-TV-17 | Before it stores a received credential, the Wallet Unit MUST validate its signing certificate as defined in RP-TV-01 to RP-TV-04. | [14] ISSU_07 to ISSU_10, [1] |
+| WU-TV-15 | Before it requests issuance, the Wallet Unit MUST obtain signed Credential Issuer metadata, MUST validate the signature with the first certificate in its `x5c` header, and MUST validate that certificate as a WRPAC as defined in WU-TV-04 and WU-TV-05. | [14] ISSU_22, ISSU_24, ISSU_32, ISSU_34, [17] clause 4.1, [31] ISS-MDATA-4.2.1-01 |
+| WU-TV-16 | Where `issuer_info` in the Credential Issuer metadata contains a WRPRC (optional\*), the Wallet Unit MUST validate it before it requests issuance, as defined in WU-TV-09 to WU-TV-12, and MUST check that it contains `provides_attestations` and that `provides_attestations` contains the credential type that the Wallet Unit is about to request. | [14] ISSU_24a, ISSU_34a, RPRC_22a, RPRC_23, [31] ISS-MDATA-REG_CERT-4.2.3-04, [33] Article 3(4), Article 8 |
+| WU-TV-17 | Before it stores a received credential, the Wallet Unit MUST validate its signing certificate as defined in RP-TV-01 to RP-TV-04. For a non-qualified EAA, this applies only where the Wallet Unit has the trust anchors from the Rulebook of the credential type (§5.2). | [14] ISSU_07 to ISSU_10, [1] |
 
 ## 7.4 Relying Party Requirements
 
@@ -321,7 +333,7 @@ These requirements also apply to the Wallet Unit for WU-TV-17.
 |----|-------------|-----------|
 | RP-TV-01 | The Relying Party MUST determine the expected Provider category of a credential (PID, QEAA, PuB-EAA or non-qualified EAA) from its credential type (`vct` or `doctype`) and the Rulebook of that type, and MUST NOT determine it only from the certificate or from claims in the credential. | [14] OIA_12 to OIA_15 |
 | RP-TV-02 | The Relying Party MUST take the signing certificate from the `x5c` header of the SD-JWT VC Issuer-signed JWT, or from the `x5chain` header of the mdoc `issuerAuth`, and MUST validate the credential signature with it. | [17] clause 6.1.1, [19] clause 2.5, [20] |
-| RP-TV-03 | The Relying Party MUST validate the path of the signing certificate as defined in §7.2 to a trust anchor of the list for the expected category in §5.2, and only of that list. | [14] OIA_12 to OIA_15, ISSU_07 to ISSU_10 |
+| RP-TV-03 | The Relying Party MUST validate the path of the signing certificate as defined in §7.2 to a trust anchor for the expected category in §5.2, and only for that category. For a non-qualified EAA, the trust anchors are those of the mechanism in the Rulebook of the credential type. | [14] OIA_12 to OIA_15, ISSU_07 to ISSU_10 |
 | RP-TV-04 | The Relying Party MUST check the certificate content for the expected category in §8.4. A PID signing certificate MUST have the QcType `id-etsi-qct-pid`, and a PuB-EAA signing certificate MUST have the `id-etsi-qcs-QcPSB` statement. | [27] PID-4.5-01, PSB-8.3-01 |
 | RP-TV-05 | Where an SD-JWT VC contains an `iss` claim, the Relying Party MUST check that it identifies the subject of the signing certificate, as defined by the Rulebook of the credential type. | [19] clauses 2.2.2.3, 2.5, 7.3 |
 | RP-TV-06 | Where a credential has a `status` claim, the Relying Party MUST validate the signer of the Status List Token as defined in §7.6 before it uses the status. | [6] RP-RV-02, [17] clause 6.1 |
@@ -343,8 +355,8 @@ These requirements also apply to the Wallet Unit for WU-TV-17.
 | ISS-TV-04 | The Credential Issuer MUST include its signing certificate and the intermediate certificates, but not the trust anchor, in the `x5c` header of each SD-JWT VC and in the `x5chain` header of each mdoc `issuerAuth`. The signing certificate MUST NOT be self-signed. | [17] clause 6.1.1, [27] |
 | ISS-TV-05 | The Credential Issuer MUST use a signing certificate that chains to a trust anchor of its own entry in the list for its category (§5.2), and whose content matches §8.4. | [14] PPNot_03, [12], [27] |
 | ISS-TV-06 | The Credential Issuer MUST ensure that each Status List Token for its credentials includes an `x5c` header whose first certificate satisfies SL-TV-02. | [14] PPNot_03a, [17] clause 6.1 |
-| ISS-TV-07 | Where the Credential Issuer signs its metadata, it MUST sign it with the key of its WRPAC and include the WRPAC chain, without the trust anchor, in the `x5c` header. | [14] ISSU_22, ISSU_32, [17] clause 4.1, [31] ISS-MDATA-ACC_CERT-4.2.2-01 to -03 |
-| ISS-TV-08 | The WRPRC of the Credential Issuer MUST contain `provides_attestations`, with one entry (`format`, `meta`) for each credential type that the Credential Issuer issues. This makes the RECOMMENDED fields of [28] GEN-5.2.4-05 mandatory in WE BUILD. | [14] RPRC_23, ISSU_24a, ISSU_34a, [28] GEN-5.2.4-05 Table 8 |
+| ISS-TV-07 | The Credential Issuer MUST sign its metadata with the key of its WRPAC, and MUST include the WRPAC chain, without the trust anchor, in the `x5c` header. | [14] ISSU_22, ISSU_32, [17] clause 4.1, [31] ISS-MDATA-ACC_CERT-4.2.2-01 to -03 |
+| ISS-TV-08 | Where the Credential Issuer includes a WRPRC in `issuer_info` in its metadata, the WRPRC MUST contain `provides_attestations`, with one entry (`format`, `meta`) for each credential type that the Credential Issuer issues. This makes the RECOMMENDED fields of [28] GEN-5.2.4-05 mandatory in WE BUILD. | [14] RPRC_23, ISSU_24a, ISSU_34a, [28] GEN-5.2.4-05 Table 8, [31] clause 4.2.3 |
 
 ## 7.6 Status List Token Signer Validation
 
@@ -357,7 +369,7 @@ The Token Status List [18] does not require the Status List Token to be signed b
 | SL-TV-03 | The Validator MUST validate the Status List Token signing certificate path as defined in §7.2. | [21] |
 | SL-TV-04 | Where SL-TV-01 to SL-TV-03 fail, the Validator MUST treat the status of the Referenced Token as unknown, and MUST NOT treat it as valid. | [6] RP-RV-05, [14] VCR_14 |
 | SL-TV-05 | An Issuer that delegates the Status Issuer role (CS-010 [6] §4) MUST ensure that the Status Issuer signs with a certificate that satisfies SL-TV-02 for the Issuer's Referenced Tokens. | [6], [18] clause 13.5 |
-| SL-TV-06 | A QEAA Provider or a non-qualified EAA Provider MUST sign its Status List Tokens with the key of the signing certificate of the attestations they reference (condition (a) of SL-TV-02), because the TS 119 612 Trusted List has no revocation service entry for them. | [12], [27] EAA-6.2-01 |
+| SL-TV-06 | A QEAA Provider or a non-qualified EAA Provider MUST sign its Status List Tokens with the key of the signing certificate of the attestations they reference (condition (a) of SL-TV-02), because the TS 119 612 Trusted List has no revocation service entry for QEAA Providers, and WE BUILD has no trusted list for non-qualified EAA Providers (§5.1). | [12], [27] EAA-6.2-01 |
 
 > **Note on SL-TV-02:** No single source defines this rule. It combines the following:
 > * Condition (a) follows the recommendation of the Token Status List for an Issuer that is also the Status Issuer ([18] clause 11.3: "the same key that is embedded into the Referenced Token may be used"), and the WP4 Trust Group rule for EAA and QEAA Providers [12], which SL-TV-06 makes mandatory for them.
@@ -366,7 +378,7 @@ The Token Status List [18] does not require the Status List Token to be signed b
 
 ## 7.7 Unhappy Paths
 
-The table defines the result of each failed or incomplete check. **Reject** means that the transaction stops and the object is not used. **Warn** means that the Wallet Unit informs the User before approval, and continues only with explicit approval of the User where the Wallet Provider's risk policy allows it ([14] RPA_06a, RPA_07b, RPRC_17, RPRC_21). **Risk decision** means that the Relying Party applies its documented acceptance policy ([6] RP-RV-05).
+The table defines the result of each failed or incomplete check. **Reject** means that the transaction stops and the object is not used. **Warn** means that the Wallet Unit informs the User before approval, and continues only with explicit approval of the User where the Wallet Provider's risk policy allows it ([14] RPA_06a, RPA_07b, RPRC_17, RPRC_21). **Risk decision** means that the Relying Party applies its documented acceptance policy ([6] RP-RV-05). A missing WRPRC is not a failure (optional\*, §7.3).
 
 | ID | Condition | Wallet Unit | Relying Party | Credential Issuer | Reference |
 |----|-----------|-------------|---------------|-------------------|-----------|
@@ -377,14 +389,16 @@ The table defines the result of each failed or incomplete check. **Reject** mean
 | UP-TV-05 | Revocation status of a certificate cannot be obtained (CRL and OCSP not reachable, no valid cached CRL) | Warn | Risk decision | Risk decision | CRT-TV-04, [15] clause 6.6.3.2 |
 | UP-TV-06 | `client_id` does not match the WRPAC, Request Object or `readerAuth` signature does not validate | Reject | not applicable | not applicable | WU-TV-02, WU-TV-03 |
 | UP-TV-07 | WRPAC fails WU-TV-04 | Warn ("the identity of the Relying Party could not be verified") | not applicable | not applicable | [14] RPA_05, RPA_06a, CT_06 |
-| UP-TV-08 | WRPRC absent, malformed, signature or path invalid, expired, or revoked | Warn | not applicable | not applicable | [14] RPRC_17, [33] Annex II WRP-VALIDATION-02, -03 |
+| UP-TV-08 | WRPRC malformed, signature or path invalid, expired, or revoked | Warn | not applicable | not applicable | [14] RPRC_17, [33] Annex II WRP-VALIDATION-02, -03 |
 | UP-TV-09 | WRPRC does not match the WRPAC (WU-TV-12) | Warn, and treat the WRPRC as absent | not applicable | not applicable | [14] RPRC_17a |
 | UP-TV-10 | Request asks for credentials or claims that the WRPRC does not list | Warn, and identify the claims that are not registered | not applicable | not applicable | [14] RPRC_21, [33] Annex II WRP-OVERASKING-01 to -03 |
-| UP-TV-11 | Credential Issuer WRPAC or WRPRC fails WU-TV-15 or WU-TV-16, including a WRPRC without `provides_attestations` or without the requested credential type | Warn, and do not request issuance | not applicable | not applicable | [14] RPRC_22a |
-| UP-TV-12 | Credential signing certificate is not in the list for the expected category, or fails §8.4 | Reject (do not store) | Reject | not applicable | RP-TV-01 to -04 |
+| UP-TV-11 | Credential Issuer metadata is not signed, or fails WU-TV-15 | Inform the User, and do not request issuance | not applicable | not applicable | [14] ISSU_24, ISSU_34 |
+| UP-TV-12 | Credential signing certificate does not chain to a trust anchor for the expected category, or fails §8.4 (for a non-qualified EAA without trust anchors, see UP-TV-16) | Reject (do not store) | Reject | not applicable | RP-TV-01 to -04 |
 | UP-TV-13 | Status List Token signer fails §7.6 | Treat status as unknown | Risk decision | Risk decision | SL-TV-04 |
 | UP-TV-14 | Status is INVALID | Inform the User | Reject | Reject | [6] RP-RV-03 |
 | UP-TV-15 | WIA or KA signing certificate fails ISS-TV-01 or ISS-TV-02 | not applicable | not applicable | Reject | [14] ISSU_19, ISSU_28 |
+| UP-TV-16 | The credential is a non-qualified EAA, and the Validator has no trust anchors for it from the Rulebook of the credential type | Do not reject for this reason | Reject | not applicable | [14] ISSU_10, OIA_15 |
+| UP-TV-17 | The WRPRC in `issuer_info` fails WU-TV-16, including a WRPRC without `provides_attestations` or without the requested credential type | Inform the User, and do not request issuance | not applicable | not applicable | [14] RPRC_22a, RPRC_23 |
 
 # 8. Interface Definitions
 
@@ -409,9 +423,8 @@ The LoTL signer certificate is published by the WP4 Trust Group with the LoTL [1
 | WRPRC Provider LoTE | `http://uri.etsi.org/19602/LoTEType/EUWRPRCProvidersList` | [23] Annex G | `http://uri.etsi.org/19602/SvcType/WRPRC/Issuance`, `.../WRPRC/Revocation` | none |
 | PuB-EAA Provider LoTE | `http://uri.etsi.org/19602/LoTEType/EUPubEAAProvidersList` | [23] Annex H | `http://uri.etsi.org/19602/SvcType/PubEAA/Issuance`, `.../PubEAA/Revocation` | `notified`, `withdrawn` |
 | QEAA Trusted List | `http://uri.etsi.org/TrstSvc/TrustedList/TSLType/EUgeneric` | [24] | `http://uri.etsi.org/TrstSvc/Svctype/EAA/Q` | `granted`, `withdrawn` |
-| EAA Trusted List | `http://uri.etsi.org/TrstSvc/TrustedList/TSLType/EUgeneric` | [24] | `http://uri.etsi.org/TrstSvc/Svctype/EAA` | per [24] clause 5.5.4 |
 
-The QEAA and EAA Trusted Lists have the same list type. The Validator tells them apart by the service type of each entry.
+The QEAA Trusted List has the generic list type. The Validator takes QEAA trust anchors only from entries with service type `Svctype/EAA/Q` (CRT-TV-01). WE BUILD has no trusted list for non-qualified EAA Providers (§5.1).
 
 ## 8.3 Where Certificates Are Carried
 
@@ -559,7 +572,7 @@ In line with the pre-flight process [7], the following topics are deliberately l
 
 1. **Relation to the Trust Group documents.** Issue #189 proposed a CS for trust evaluation and was closed with the decision that the Trust Group documents would cover it. This specification profiles those documents [9], [10], [11], [12] for testing and does not replace them. Feedback is sought from the Trust Group on the split between its documents and this CS.
 2. **LoTE consumption procedure.** ETSI TS 119 605 (procedures for LoTEs) is not published. LST-TV-01 to LST-TV-09 are a minimum WE BUILD profile until it is.
-3. **Non-qualified EAA trust anchors.** The ARF leaves the trust anchors of non-qualified EAAs to the Rulebook ([14] OIA_15, ISSU_10). WE BUILD uses a TS 119 612 Trusted List with service type `Svctype/EAA`. Report whether a Rulebook needs a different anchor source, and which service status values the EAA lists use.
+3. **Non-qualified EAA trust anchors.** WE BUILD has no trusted list for non-qualified EAA Providers. The ARF leaves their trust anchors to the Rulebook of the credential type ([14] OIA_15, ISSU_10), so this specification does not define one anchor source for them. Report which mechanism each Rulebook uses, and whether Wallet Units and Relying Parties can obtain the trust anchors.
 4. **EBWOID Provider list.** The trust group maps the `ebwoid-provider` category to the `EURegistrarsAndRegistersList` type and the `SvcType/Register` service type. This specification treats an EBWOID as a PID, QEAA or PuB-EAA according to its Provider's category. Report which list an EBWOID signing certificate chains to in practice.
 5. **Status List Token signer.** SL-TV-02 is a WE BUILD rule. The Token Status List defines an extended key usage for delegated status signing ([18] clause 10), but its object identifier is not yet assigned. Report whether delegated Status Issuers can meet SL-TV-02, and whether the `.../Revocation` service entries are populated.
 6. **Token Status List revision.** CS-010 [6] pins draft-20. Draft-21 (August 2026) is in the RFC Editor queue. HAIP 1.0 [17] references draft-14. Alignment of the pinned revision is left to CS-010.
